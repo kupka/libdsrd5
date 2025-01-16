@@ -444,11 +444,11 @@ namespace srd5 {
         public void EndOfTurnEventTest() {
             CharacterSheet sheet = new CharacterSheet(Race.HALFLING, true);
             int i = 0;
-            TurnEvent endOfTurnEventTrue = delegate (Combattant combattant) {
+            TurnEvent endOfTurnEventTrue = delegate () {
                 i++;
                 return true;
             };
-            TurnEvent endOfTurnEventFalse = delegate (Combattant combattant) {
+            TurnEvent endOfTurnEventFalse = delegate () {
                 i++;
                 return false;
             };

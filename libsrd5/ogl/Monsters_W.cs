@@ -21,9 +21,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WerebearBiteEffect = delegate (Combattant attacker, Combattant target) {
-            if (target is Monster monster) {
-                if (monster.Type != Monsters.Type.HUMANOID) return;
-            }
+            if (target is Monster monster && monster.Type != Monsters.Type.HUMANOID) return;
             if (target.DC(WerebearBite, 14, AbilityType.CONSTITUTION)) return;
             target.AddEffect(Effect.CURSE_WEREBEAR);
         };
@@ -58,9 +56,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WereboarTusksEffect = delegate (Combattant attacker, Combattant target) {
-            if (target is Monster monster) {
-                if (monster.Type != Monsters.Type.HUMANOID) return;
-            }
+            if (target is Monster monster && monster.Type != Monsters.Type.HUMANOID) return;
             if (target.DC(WereboarTusks, 12, AbilityType.CONSTITUTION)) return;
             target.AddEffect(Effect.CURSE_WEREBOAR);
         };
@@ -95,9 +91,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WereratBiteEffect = delegate (Combattant attacker, Combattant target) {
-            if (target is Monster monster) {
-                if (monster.Type != Monsters.Type.HUMANOID) return;
-            }
+            if (target is Monster monster && monster.Type != Monsters.Type.HUMANOID) return;
             if (target.DC(WereratBite, 11, AbilityType.CONSTITUTION)) return;
             target.AddEffect(Effect.CURSE_WERERAT);
         };
@@ -132,9 +126,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WeretigerBiteEffect = delegate (Combattant attacker, Combattant target) {
-            if (target is Monster monster) {
-                if (monster.Type != Monsters.Type.HUMANOID) return;
-            }
+            if (target is Monster monster && monster.Type != Monsters.Type.HUMANOID) return;
             if (target.DC(WeretigerBite, 13, AbilityType.CONSTITUTION)) return;
             target.AddEffect(Effect.CURSE_WERETIGER);
         };
@@ -179,9 +171,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WerewolfBiteEffect = delegate (Combattant attacker, Combattant target) {
-            if (target is Monster monster) {
-                if (monster.Type != Monsters.Type.HUMANOID) return;
-            }
+            if (target is Monster monster && monster.Type != Monsters.Type.HUMANOID) return;
             if (target.DC(WerewolfBite, 12, AbilityType.CONSTITUTION)) return;
             target.AddEffect(Effect.CURSE_WEREWOLF);
         };

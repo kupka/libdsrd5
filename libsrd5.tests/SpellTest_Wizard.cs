@@ -155,5 +155,28 @@ namespace srd5 {
             ground.NextPhase();
             wizard.Attack(Attacks.GiantBadgerBite, orc2, 5); // no longer active
         }
+
+        [Fact]
+        public void DancingLightsTest() {
+            CharacterSheet wizard = new CharacterSheet(Race.GNOME, true);
+            Spells.DancingLights.Cast(wizard, 14, SpellLevel.CANTRIP, 0);
+        }
+
+        [Fact]
+        public void SleepTest() {
+            Monster hag = Monsters.NightHag;
+            CharacterSheet hero = new CharacterSheet(Race.GNOME);
+            hero.AddLevel(CharacterClasses.Druid);
+            Monster badger1 = Monsters.Badger;
+            badger1.AddCondition(ConditionType.UNCONSCIOUS);
+            Monster badger2 = Monsters.Badger;
+            Monster zombie = Monsters.Zombie;
+            Monster bandit = Monsters.Bandit;
+            bandit.AddEffect(Effect.IMMUNITY_CHARMED);
+            Battleground ground = createBattleground(hag, badger1, zombie, hero, bandit, badger2);
+            Spells.Sleep.Cast(ground, hag, 18, SpellLevel.THIRD, hag.ProficiencyBonus, hero, badger1, zombie, badger2, bandit);
+            Assert.True(badger2.HasCondition(ConditionType.UNCONSCIOUS));
+            Assert.False(zombie.HasCondition(ConditionType.UNCONSCIOUS) || bandit.HasCondition(ConditionType.UNCONSCIOUS));
+        }
     }
 }

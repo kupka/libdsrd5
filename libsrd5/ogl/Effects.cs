@@ -244,9 +244,9 @@ namespace srd5 {
                     combattant.AddCondition(ConditionType.RESTRAINED);
                     break;
                 case Effect.FIRE_ELEMENTAL_IGNITE:
-                    combattant.AddStartOfTurnEvent(delegate (Combattant combattant1) {
-                        if (!combattant1.HasEffect(effect)) return true;
-                        combattant1.TakeDamage(DamageType.FIRE, "1d10");
+                    combattant.AddStartOfTurnEvent(delegate () {
+                        if (!combattant.HasEffect(effect)) return true;
+                        combattant.TakeDamage(DamageType.FIRE, "1d10");
                         return false;
                     });
                     break;
@@ -257,11 +257,11 @@ namespace srd5 {
                     dc = 10;
                     duration = 10; // one minute 
                     if (effect == Effect.LICH_PARALYZATION) dc = 18;
-                    combattant.AddEndOfTurnEvent(delegate (Combattant combattant1) {
-                        if (!combattant1.HasEffect(effect)) return true;
-                        bool success = combattant1.DC(effect, dc, AbilityType.CONSTITUTION);
+                    combattant.AddEndOfTurnEvent(delegate () {
+                        if (!combattant.HasEffect(effect)) return true;
+                        bool success = combattant.DC(effect, dc, AbilityType.CONSTITUTION);
                         if (turn++ >= duration) success = true;
-                        if (success) combattant1.RemoveEffect(effect);
+                        if (success) combattant.RemoveEffect(effect);
                         return success;
                     });
                     break;
@@ -276,14 +276,15 @@ namespace srd5 {
                     // (3d6) for every 24 hours that elapse. If the curse reduces the target's hit point maximum to 0, 
                     // the target dies, and its body turns to dust. The curse lasts until removed by the remove curse 
                     // spell or other magic.
+                    combattant.AddEffect(Effect.CANNOT_REGAIN_HITPOINTS);
                     break;
                 case Effect.HOMUNCULUS_POISON_UNCONCIOUSNESS:
                     combattant.AddConditions(ConditionType.POISONED, ConditionType.UNCONSCIOUS);
                     break;
                 case Effect.MAGMIN_IGNITE:
-                    combattant.AddStartOfTurnEvent(delegate (Combattant combattant1) {
-                        if (!combattant1.HasEffect(effect)) return true;
-                        combattant1.TakeDamage(DamageType.FIRE, "1d6");
+                    combattant.AddStartOfTurnEvent(delegate () {
+                        if (!combattant.HasEffect(effect)) return true;
+                        combattant.TakeDamage(DamageType.FIRE, "1d6");
                         return false;
                     });
                     break;
@@ -300,13 +301,13 @@ namespace srd5 {
                 case Effect.PIT_FIEND_POISON:
                     combattant.AddCondition(ConditionType.POISONED);
                     combattant.AddEffect(Effect.CANNOT_REGAIN_HITPOINTS);
-                    combattant.AddStartOfTurnEvent(delegate (Combattant combattant1) {
-                        if (!combattant1.HasEffect(effect)) return true;
-                        combattant1.TakeDamage(DamageType.POISON, "6d6");
+                    combattant.AddStartOfTurnEvent(delegate () {
+                        if (!combattant.HasEffect(effect)) return true;
+                        combattant.TakeDamage(DamageType.POISON, "6d6");
                         return false;
                     });
-                    combattant.AddEndOfTurnEvent(delegate (Combattant combattant1) {
-                        if (!combattant1.HasEffect(effect)) return true;
+                    combattant.AddEndOfTurnEvent(delegate () {
+                        if (!combattant.HasEffect(effect)) return true;
                         if (combattant.DC(effect, 21, AbilityType.CONSTITUTION)) {
                             combattant.RemoveEffect(effect);
                             return true;
@@ -328,17 +329,17 @@ namespace srd5 {
                     combattant.AddCondition(ConditionType.POISONED);
                     dc = 10;
                     duration = 10; // one minute
-                    combattant.AddEndOfTurnEvent(delegate (Combattant combattant1) {
-                        if (!combattant1.HasEffect(effect)) return true;
-                        bool success = combattant1.DC(effect, dc, AbilityType.CONSTITUTION);
+                    combattant.AddEndOfTurnEvent(delegate () {
+                        if (!combattant.HasEffect(effect)) return true;
+                        bool success = combattant.DC(effect, dc, AbilityType.CONSTITUTION);
                         if (turn++ >= duration) success = true;
-                        if (success) combattant1.RemoveEffect(effect);
+                        if (success) combattant.RemoveEffect(effect);
                         return success;
                     });
                     break;
                 case Effect.RUG_SMOTHER:
                     if (!combattant.HasEffect(Effect.IMMUNITY_BLINDED)) combattant.AddCondition(ConditionType.BLINDED);
-                    combattant.AddStartOfTurnEvent(delegate (Combattant combattant1) {
+                    combattant.AddStartOfTurnEvent(delegate () {
                         if (combattant.HasCondition(ConditionType.GRAPPLED_DC13)) {
                             combattant.TakeDamage(DamageType.BLUDGEONING, "2d6+3");
                             return false;
@@ -427,6 +428,9 @@ namespace srd5 {
                     break;
                 case Effect.RUG_SMOTHER:
                     combattant.RemoveCondition(ConditionType.BLINDED);
+                    break;
+                case Effect.CURSE_MUMMY_ROT:
+                    combattant.RemoveEffect(Effect.CANNOT_REGAIN_HITPOINTS);
                     break;
             }
         }

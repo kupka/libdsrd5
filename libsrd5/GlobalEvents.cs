@@ -11,6 +11,7 @@ namespace srd5 {
             CONDITION,
             DC,
             SPELL,
+            SPELL_WITHOUT_EFFECT,
             EQUIPMENT,
             EFFECT_ACTIVATED
         }
@@ -87,13 +88,15 @@ namespace srd5 {
 
         public class DCRolled : EventArgs {
             public Combattant Roller { get; private set; }
+            public object Source { get; private set; }
             public Ability Ability { get; private set; }
             public int DC { get; private set; }
             public int Roll { get; private set; }
             public bool Success { get; private set; }
 
-            public DCRolled(Combattant roller, Ability ability, int dc, int roll, bool success) {
+            public DCRolled(Combattant roller, object source, Ability ability, int dc, int roll, bool success) {
                 Roller = roller;
+                Source = source;
                 Ability = ability;
                 DC = dc;
                 Roll = roll;
@@ -101,9 +104,9 @@ namespace srd5 {
             }
         }
 
-        internal static void RolledDC(Combattant roller, Ability ability, int dc, int roll, bool success) {
+        internal static void RolledDC(Combattant roller, object source, Ability ability, int dc, int roll, bool success) {
             if (Handlers == null) return;
-            Handlers(EventTypes.DC, new DCRolled(roller, ability, dc, roll, success));
+            Handlers(EventTypes.DC, new DCRolled(roller, source, ability, dc, roll, success));
         }
 
         public class ConditionChanged : EventArgs {
@@ -223,6 +226,21 @@ namespace srd5 {
         public static void ActivateFeat(Combattant source, Feat feat) {
             if (Handlers == null) return;
             Handlers(EventTypes.EFFECT_ACTIVATED, new FeatActivated(source, feat));
+        }
+
+        public class SpellWithoutEffect : EventArgs {
+            public Combattant Caster { get; private set; }
+            public Spells.ID Spell { get; private set; }
+
+            public SpellWithoutEffect(Combattant caster, Spells.ID spell) {
+                Caster = caster;
+                Spell = spell;
+            }
+        }
+
+        public static void EffectlessSpell(Combattant caster, Spells.ID spell) {
+            if (Handlers == null) return;
+            Handlers(EventTypes.SPELL_WITHOUT_EFFECT, new SpellWithoutEffect(caster, spell));
         }
     }
 }

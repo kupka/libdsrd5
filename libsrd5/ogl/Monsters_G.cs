@@ -16,9 +16,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect GhastClawsEffect = delegate (Combattant attacker, Combattant target) {
-            if (target is Monster monster) {
-                if (monster.Type == Monsters.Type.UNDEAD) return;
-            }
+            if (target is Monster monster && monster.Type == Monsters.Type.UNDEAD) return;
             bool success = target.DC(GhastClaws, 10, AbilityType.CONSTITUTION);
             if (success) return;
             target.AddEffect(Effect.GHAST_CLAWS_PARALYZATION);
@@ -42,9 +40,7 @@ namespace srd5 {
             if (target is CharacterSheet sheet) {
                 if (sheet.Race.Race == Race.HALF_ELF || sheet.Race.Race == Race.HIGH_ELF) return;
             }
-            if (target is Monster monster) {
-                if (monster.Type == Monsters.Type.UNDEAD) return;
-            }
+            if (target is Monster monster && monster.Type == Monsters.Type.UNDEAD) return;
             bool success = target.DC(GhoulClaws, 10, AbilityType.CONSTITUTION);
             if (success) return;
             target.AddEffect(Effect.GHOUL_CLAWS_PARALYZATION);

@@ -375,7 +375,7 @@ namespace srd5 {
             Assert.False(ground.SpellCastAction(Spells.AcidSplash, SpellLevel.CANTRIP, hero.AvailableSpells[0], ogre, ogre2, ogre3));
             // Target outside area of effect
             Assert.False(ground.SpellCastAction(Spells.AcidSplash, SpellLevel.CANTRIP, hero.AvailableSpells[0], ogre, ogre4));
-            Random.State = 5; // Fix random so one ogre fails DC
+            Random.State = 11; // Fix random so one ogre fails DC
             Assert.True(ground.SpellCastAction(Spells.AcidSplash, SpellLevel.CANTRIP, hero.AvailableSpells[0], ogre, ogre2));
             Assert.True(ogre.HitPointsMax > ogre.HitPoints);
             Assert.True(ogre2.HitPointsMax == ogre2.HitPoints);

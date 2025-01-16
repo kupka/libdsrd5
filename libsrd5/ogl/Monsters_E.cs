@@ -72,9 +72,9 @@ namespace srd5 {
             if (success) return;
             target.AddEffect(Effect.ETTERCAP_POISON);
             int turn = 0;
-            target.AddEndOfTurnEvent(delegate (Combattant combattant) {
-                success = combattant.DC(EttercapBite, 11, AbilityType.CONSTITUTION);
-                if ((turn++) > 10) success = true;
+            target.AddEndOfTurnEvent(delegate () {
+                success = target.DC(EttercapBite, 11, AbilityType.CONSTITUTION);
+                if (turn++ > 10) success = true;
                 if (success) target.RemoveEffect(Effect.ETTERCAP_POISON);
                 return success;
             });

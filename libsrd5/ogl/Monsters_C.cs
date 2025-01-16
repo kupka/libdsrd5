@@ -31,13 +31,13 @@ namespace srd5 {
             attacker.AddEffect(Effect.GRAPPLING);
             target.AddCondition(ConditionType.GRAPPLED_DC14);
             target.AddCondition(ConditionType.RESTRAINED);
-            target.AddStartOfTurnEvent(delegate (Combattant combattant) {
-                if (!combattant.HasCondition(ConditionType.GRAPPLED_DC14)) {
+            target.AddStartOfTurnEvent(delegate () {
+                if (!target.HasCondition(ConditionType.GRAPPLED_DC14)) {
                     attacker.RemoveEffect(Effect.GRAPPLING);
-                    combattant.RemoveCondition(ConditionType.RESTRAINED);
+                    target.RemoveCondition(ConditionType.RESTRAINED);
                     return true;
                 }
-                combattant.TakeDamage(DamageType.PIERCING, "2d6");
+                target.TakeDamage(DamageType.PIERCING, "2d6");
                 return false;
             });
         };
@@ -116,7 +116,7 @@ namespace srd5 {
         public static readonly AttackEffect CockatriceBiteEffect = delegate (Combattant attacker, Combattant target) {
             if (target.DC(CockatriceBite, 12, AbilityType.CONSTITUTION)) return;
             target.AddCondition(ConditionType.RESTRAINED);
-            target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+            target.AddEndOfTurnEvent(delegate () {
                 if (!target.DC(CockatriceBite, 11, AbilityType.CONSTITUTION)) target.AddCondition(ConditionType.PETRIFIED);
                 target.RemoveCondition(ConditionType.RESTRAINED);
                 return true;
@@ -154,7 +154,7 @@ namespace srd5 {
             if (target.IsImmune(DamageType.POISON)) return;
             if (target.DC(CouatlBite, 13, AbilityType.CONSTITUTION)) return;
             target.AddEffect(Effect.COUATL_POISON);
-            target.AddDamageTakenEvent(delegate (Combattant combattant) {
+            target.AddDamageTakenEvent(delegate () {
                 target.RemoveEffect(Effect.COUATL_POISON);
                 return true;
             });

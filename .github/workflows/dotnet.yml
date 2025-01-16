@@ -1,81 +1,81 @@
 name: .NET
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@main
-    - name: Setup .NET
-      uses: actions/setup-dotnet@main
-      with:
-        dotnet-version: '6.0.x'
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Build
-      run: dotnet build --no-restore
-    - name: Test
-#      run: dotnet test libsrd5.tests/libsrd5.tests.csproj -r TestResults --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
-      run: dotnet test libsrd5.tests/libsrd5.tests.csproj -r TestResults --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-    - name: Get path to lcov file
-      id: get_lcov_path
-      shell: bash
-#      run: printf '::set-output name=lcov_path::%s\n' TestResults/*/coverage.info
-      run: printf '::set-output name=lcov_path::%s\n' TestResults/*/coverage.opencover.xml
-    - name: Publish coverage report to codecov
-      uses: codecov/codecov-action@main
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        files: ${{ steps.get_lcov_path.outputs.lcov_path }}
-        fail_ci_if_error: true 
-#    - name: Publish coverage report to coveralls.io
-#      uses: coverallsapp/github-action@master
-#      with:
-#        github-token: ${{ secrets.GITHUB_TOKEN }}
-#        path-to-lcov: ${{ steps.get_lcov_path.outputs.lcov_path }}
-    - name: Pack NuGet Package
-      run: dotnet pack --configuration Release
+      - uses: actions/checkout@main
+      - name: Setup .NET
+        uses: actions/setup-dotnet@main
+        with:
+          dotnet-version: "9.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test
+        #      run: dotnet test libsrd5.tests/libsrd5.tests.csproj -r TestResults --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=lcov
+        run: dotnet test libsrd5.tests/libsrd5.tests.csproj -r TestResults --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+      - name: Get path to lcov file
+        id: get_lcov_path
+        shell: bash
+        #      run: printf '::set-output name=lcov_path::%s\n' TestResults/*/coverage.info
+        run: printf '::set-output name=lcov_path::%s\n' TestResults/*/coverage.opencover.xml
+      - name: Publish coverage report to codecov
+        uses: codecov/codecov-action@main
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ steps.get_lcov_path.outputs.lcov_path }}
+          fail_ci_if_error: true
+      #    - name: Publish coverage report to coveralls.io
+      #      uses: coverallsapp/github-action@master
+      #      with:
+      #        github-token: ${{ secrets.GITHUB_TOKEN }}
+      #        path-to-lcov: ${{ steps.get_lcov_path.outputs.lcov_path }}
+      - name: Pack NuGet Package
+        run: dotnet pack --configuration Release
   versioncheck:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - uses: actions/checkout@main
-    - name: Setup .NET
-      uses: actions/setup-dotnet@main
-      with:
-        dotnet-version: '6.0.x'
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Pack NuGet Package
-      run: dotnet pack --configuration Release
-    - name: Get path to nupkg file
-      id: get_nupkg_version
-      shell: bash
-      run: printf '::set-output name=nupkg_version::%s\n' libsrd5/bin/Release/libsrd5*.nupkg | sed -E 's/libsrd5\/bin\/Release\/libsrd5\.(.*)\.nupkg/\1/g'
-    - name: Fail if package version exists
-      run: curl https://nuget.pkg.github.com/kupka/libsrd5/${{ steps.get_nupkg_version.outputs.nupkg_version }}.json -u USERNAME:${{ secrets.GITHUB_TOKEN }} --silent --fail && exit 1 || exit 0
+      - uses: actions/checkout@main
+      - name: Setup .NET
+        uses: actions/setup-dotnet@main
+        with:
+          dotnet-version: "9.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Pack NuGet Package
+        run: dotnet pack --configuration Release
+      - name: Get path to nupkg file
+        id: get_nupkg_version
+        shell: bash
+        run: printf '::set-output name=nupkg_version::%s\n' libsrd5/bin/Release/libsrd5*.nupkg | sed -E 's/libsrd5\/bin\/Release\/libsrd5\.(.*)\.nupkg/\1/g'
+      - name: Fail if package version exists
+        run: curl https://nuget.pkg.github.com/kupka/libsrd5/${{ steps.get_nupkg_version.outputs.nupkg_version }}.json -u USERNAME:${{ secrets.GITHUB_TOKEN }} --silent --fail && exit 1 || exit 0
   publish:
     runs-on: ubuntu-latest
     needs: versioncheck
     if: github.ref == 'refs/heads/main'
     steps:
-    - uses: actions/checkout@main
-    - name: Setup .NET
-      uses: actions/setup-dotnet@main
-      with:
-        dotnet-version: '6.0.x'
-    - name: Restore dependencies
-      run: dotnet restore
-    - name: Pack NuGet Package
-      run: dotnet pack --configuration Release
-    - name: Authenticate for Registry
-      run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/kupka/index.json"
-    - name: Get path to nupkg file
-      id: get_nupkg_path
-      shell: bash
-      run: printf '::set-output name=nupkg_path::%s\n' libsrd5/bin/Release/libsrd5*.nupkg
-    - name: Publish package 
-      run: dotnet nuget push ${{ steps.get_nupkg_path.outputs.nupkg_path }} --api-key ${{ secrets.GITHUB_TOKEN }} --source github
+      - uses: actions/checkout@main
+      - name: Setup .NET
+        uses: actions/setup-dotnet@main
+        with:
+          dotnet-version: "9.0.x"
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Pack NuGet Package
+        run: dotnet pack --configuration Release
+      - name: Authenticate for Registry
+        run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/kupka/index.json"
+      - name: Get path to nupkg file
+        id: get_nupkg_path
+        shell: bash
+        run: printf '::set-output name=nupkg_path::%s\n' libsrd5/bin/Release/libsrd5*.nupkg
+      - name: Publish package
+        run: dotnet nuget push ${{ steps.get_nupkg_path.outputs.nupkg_path }} --api-key ${{ secrets.GITHUB_TOKEN }} --source github

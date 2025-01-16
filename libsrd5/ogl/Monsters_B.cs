@@ -79,10 +79,10 @@ namespace srd5 {
             if (target.IsImmune(DamageType.POISON)) return;
             target.AddEffect(Effect.BEARDED_DEVIL_POISON);
             int turn = 0;
-            target.AddEndOfTurnEvent(delegate (Combattant combattant) {
-                bool success = combattant.DC(BeardedDevilBeard, 12, AbilityType.CONSTITUTION);
+            target.AddEndOfTurnEvent(delegate () {
+                bool success = target.DC(BeardedDevilBeard, 12, AbilityType.CONSTITUTION);
                 if (turn++ > 9 || success) {
-                    combattant.RemoveEffect(Effect.BEARDED_DEVIL_POISON);
+                    target.RemoveEffect(Effect.BEARDED_DEVIL_POISON);
                 }
                 return success;
             });
@@ -100,12 +100,12 @@ namespace srd5 {
             if (target.DC(BeardedDevilGlaive, 12, AbilityType.CONSTITUTION)) return;
             // add infernal wound affect if newly applied
             if (!target.HasEffect(Effect.INFERNAL_WOUND_BEARDED_DEVIL)) {
-                target.AddStartOfTurnEvent(delegate (Combattant combattant) {
-                    foreach (Effect effect in combattant.Effects) {
+                target.AddStartOfTurnEvent(delegate () {
+                    foreach (Effect effect in target.Effects) {
                         if (effect != Effect.INFERNAL_WOUND_BEARDED_DEVIL) continue;
-                        combattant.TakeDamage(DamageType.TRUE_DAMAGE, "1d10");
+                        target.TakeDamage(DamageType.TRUE_DAMAGE, "1d10");
                     }
-                    return combattant.HasEffect(Effect.INFERNAL_WOUND_BEARDED_DEVIL);
+                    return target.HasEffect(Effect.INFERNAL_WOUND_BEARDED_DEVIL);
                 });
             }
             // increase infernal wound stack by one
@@ -195,10 +195,10 @@ namespace srd5 {
             if (target.DC(BoneDevilSting, 14, AbilityType.CONSTITUTION)) return;
             if (target.IsImmune(DamageType.POISON)) return;
             target.AddEffect(Effect.BONE_DEVIL_POISON);
-            target.AddEndOfTurnEvent(delegate (Combattant combattant) {
-                bool success = combattant.DC(BoneDevilSting, 14, AbilityType.CONSTITUTION);
+            target.AddEndOfTurnEvent(delegate () {
+                bool success = target.DC(BoneDevilSting, 14, AbilityType.CONSTITUTION);
                 if (success) {
-                    combattant.RemoveEffect(Effect.BONE_DEVIL_POISON);
+                    target.RemoveEffect(Effect.BONE_DEVIL_POISON);
                 }
                 return success;
             });

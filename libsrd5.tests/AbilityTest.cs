@@ -11,7 +11,7 @@ namespace srd5 {
         [InlineData(26, 8)]
         [InlineData(39, 10)]
         public void TestModifier(int value, int expected) {
-            Ability ability = new Ability(AbilityType.STRENGTH, value);
+            Ability ability = new(AbilityType.STRENGTH, value);
             Assert.Equal(AbilityType.STRENGTH.Name(), ability.Name);
             ability.BaseValue = value;
             Assert.Equal(expected, ability.Modifier);

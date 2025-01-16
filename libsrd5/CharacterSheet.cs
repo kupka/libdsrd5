@@ -32,7 +32,7 @@ namespace srd5 {
         }
         public Item[] Bag { get { return bag; } }
         private Item[] bag = new Item[0];
-        private CharacterSheet owner;
+        private readonly CharacterSheet owner;
 
         public CharacterInventory(CharacterSheet owner) {
             this.owner = owner;
@@ -79,8 +79,8 @@ namespace srd5 {
                 if (Inventory.Armor != null) {
                     ac = Inventory.Armor.AC + Math.Min(Inventory.Armor.MaxDexBonus, Dexterity.Modifier);
                 }
-                if (Inventory.OffHand != null && Inventory.OffHand is Shield) {
-                    Shield shield = (Shield)Inventory.OffHand;
+                if (Inventory.OffHand != null && Inventory.OffHand is Shield shield1) {
+                    Shield shield = shield1;
                     ac += shield.AC;
                 }
                 return ac + ArmorClassModifier;
@@ -431,8 +431,9 @@ namespace srd5 {
                     return;
                 }
             }
-            CharacterLevel newLevel = new CharacterLevel();
-            newLevel.Class = characterClass;
+            CharacterLevel newLevel = new CharacterLevel {
+                Class = characterClass
+            };
             foreach (Feat feat in characterClass.Feats[0]) {
                 AddFeat(feat);
             }
@@ -469,8 +470,9 @@ namespace srd5 {
             }
             // If no such entry is available yet, add one
             if (spells == null) {
-                spells = new AvailableSpells(level.Class);
-                spells.CharacterClass = level.Class;
+                spells = new AvailableSpells(level.Class) {
+                    CharacterClass = level.Class
+                };
                 AddAvailableSpells(spells);
             }
             // Set the slots according to the new level

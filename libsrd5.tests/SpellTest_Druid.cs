@@ -5,16 +5,25 @@ namespace srd5 {
     [CollectionDefinition("SingleThreaded", DisableParallelization = true)]
     [Collection("SingleThreaded")]
     public partial class SpellTest {
+        private BattleGroundClassic createBattleground(Combattant caster, params Combattant[] targets) {
+            BattleGroundClassic ground = new BattleGroundClassic();
+            ground.AddCombattant(caster, ClassicLocation.Row.FRONT_LEFT);
+            foreach (Combattant target in targets) {
+                ground.AddCombattant(target, ClassicLocation.Row.FRONT_RIGHT);
+            }
+            return ground;
+        }
+
+
         [Fact]
         public void AcidSplashTest() {
             CharacterSheet hero = new CharacterSheet(Race.HUMAN, true);
             Monster ogre = Monsters.Ogre;
-            int hpBefore = ogre.HitPoints;
             for (int i = 0; i < 17; i++) {
                 hero.AddLevel(CharacterClasses.Druid);
                 if (i == 1 || i == 4 || i == 10 || i == 16) {
-                    hpBefore = ogre.HitPoints;
-                    Spells.AcidSplash.Cast(hero, 8 + hero.ProficiencyBonus + hero.Intelligence.Modifier, SpellLevel.CANTRIP, hero.Intelligence.Modifier, ogre);
+                    int hpBefore = ogre.HitPoints;
+                    Spells.AcidSplash.Cast(createBattleground(hero, ogre), hero, 8 + hero.ProficiencyBonus + hero.Intelligence.Modifier, SpellLevel.CANTRIP, hero.Intelligence.Modifier, ogre);
                     Assert.True(ogre.HitPoints <= hpBefore);
                 }
             }
@@ -36,7 +45,7 @@ namespace srd5 {
             Monster ogre3 = Monsters.Ogre;
             Monster ogre4 = Monsters.Ogre;
             Monster ogre5 = Monsters.Ogre;
-            Spells.MagicMissile.Cast(hero, 8 + hero.ProficiencyBonus + hero.Intelligence.Modifier, SpellLevel.SECOND, hero.Intelligence.Modifier, ogre1, ogre2, ogre3, ogre4, ogre5);
+            Spells.MagicMissile.Cast(createBattleground(hero, ogre1, ogre2, ogre3, ogre4, ogre5), hero, 8 + hero.ProficiencyBonus + hero.Intelligence.Modifier, SpellLevel.SECOND, hero.Intelligence.Modifier, ogre1, ogre2, ogre3, ogre4, ogre5);
             Assert.True(ogre1.HitPoints < ogre1.HitPointsMax);
             Assert.True(ogre2.HitPoints < ogre2.HitPointsMax);
             Assert.True(ogre3.HitPoints < ogre3.HitPointsMax);
@@ -47,24 +56,25 @@ namespace srd5 {
         [Fact]
         public void CureWoundsTest() {
             CharacterSheet hero = new CharacterSheet(Race.GNOME);
+            Battleground ground = createBattleground(hero);
             hero.AddLevel(CharacterClasses.Druid);
             hero.HitPoints = 1;
-            Spells.CureWounds.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, hero);
+            Spells.CureWounds.Cast(ground, hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, hero);
             Assert.Equal(hero.HitPointsMax, hero.HitPoints);
             // doesn't affect undead
             Monster shadow = Monsters.Shadow;
             shadow.HitPoints = shadow.HitPointsMax - 1;
-            Spells.CureWounds.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, shadow);
+            Spells.CureWounds.Cast(ground, hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, shadow);
             Assert.Equal(shadow.HitPointsMax - 1, shadow.HitPoints);
             // doesn't affect constructs
             Monster golem = Monsters.ClayGolem;
             golem.HitPoints = golem.HitPointsMax - 1;
-            Spells.CureWounds.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, golem);
+            Spells.CureWounds.Cast(ground, hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, golem);
             Assert.Equal(golem.HitPointsMax - 1, golem.HitPoints);
             // affects giants
             Monster ogre = Monsters.Ogre;
             ogre.HitPoints = ogre.HitPointsMax - 10;
-            Spells.CureWounds.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, ogre);
+            Spells.CureWounds.Cast(ground, hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, ogre);
             Assert.Equal(ogre.HitPointsMax, ogre.HitPoints);
         }
 
@@ -73,22 +83,22 @@ namespace srd5 {
             CharacterSheet hero = new CharacterSheet(Race.GNOME);
             hero.AddLevel(CharacterClasses.Druid);
             hero.HitPoints = 1;
-            Spells.HealingWord.Cast(hero, 0, SpellLevel.SEVENTH, hero.Wisdom.Modifier, hero);
+            Spells.HealingWord.Cast(createBattleground(hero), hero, 0, SpellLevel.SEVENTH, hero.Wisdom.Modifier, hero);
             Assert.Equal(hero.HitPointsMax, hero.HitPoints);
             // doesn't affect undead
             Monster shadow = Monsters.Shadow;
             shadow.HitPoints = shadow.HitPointsMax - 1;
-            Spells.HealingWord.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, shadow);
+            Spells.HealingWord.Cast(createBattleground(hero, shadow), hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, shadow);
             Assert.Equal(shadow.HitPointsMax - 1, shadow.HitPoints);
             // doesn't affect constructs
             Monster golem = Monsters.ClayGolem;
             golem.HitPoints = golem.HitPointsMax - 1;
-            Spells.HealingWord.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, golem);
+            Spells.HealingWord.Cast(createBattleground(hero, golem), hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, golem);
             Assert.Equal(golem.HitPointsMax - 1, golem.HitPoints);
             // affects giants
             Monster ogre = Monsters.Ogre;
             ogre.HitPoints = ogre.HitPointsMax - 10;
-            Spells.HealingWord.Cast(hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, ogre);
+            Spells.HealingWord.Cast(createBattleground(hero, ogre), hero, 0, SpellLevel.NINETH, hero.Wisdom.Modifier, ogre);
             Assert.Equal(ogre.HitPointsMax, ogre.HitPoints);
         }
 
@@ -131,18 +141,19 @@ namespace srd5 {
             Monster orc4 = Monsters.Orc;
             Monster orc5 = Monsters.Orc;
             Monster orc6 = Monsters.Orc;
+            Battleground ground = createBattleground(hero, orc1, orc2, orc3, orc4, orc5, orc6);
             Random.State = 1;
             if (spell.MaximumTargets > 1) {
-                spell.Cast(hero, dc, slot, 0, orc1, orc2);
-                spell.Cast(hero, dc, slot, 0, orc3, orc4);
-                spell.Cast(hero, dc, slot, 0, orc5, orc6);
+                spell.Cast(ground, hero, dc, slot, 0, orc1, orc2);
+                spell.Cast(ground, hero, dc, slot, 0, orc3, orc4);
+                spell.Cast(ground, hero, dc, slot, 0, orc5, orc6);
             } else {
-                spell.Cast(hero, dc, slot, 0, orc1);
-                spell.Cast(hero, dc, slot, 0, orc2);
-                spell.Cast(hero, dc, slot, 0, orc3);
-                spell.Cast(hero, dc, slot, 0, orc4);
-                spell.Cast(hero, dc, slot, 0, orc5);
-                spell.Cast(hero, dc, slot, 0, orc6);
+                spell.Cast(ground, hero, dc, slot, 0, orc1);
+                spell.Cast(ground, hero, dc, slot, 0, orc2);
+                spell.Cast(ground, hero, dc, slot, 0, orc3);
+                spell.Cast(ground, hero, dc, slot, 0, orc4);
+                spell.Cast(ground, hero, dc, slot, 0, orc5);
+                spell.Cast(ground, hero, dc, slot, 0, orc6);
             }
             if (checkForCondition != null) {
                 ConditionType cond = (ConditionType)checkForCondition;
@@ -183,17 +194,22 @@ namespace srd5 {
 
         [Fact]
         public void CharmPersonTest() {
-            Spells.CharmPerson.Cast(Monsters.NightHag, 10, SpellLevel.CANTRIP, 10, new Combattant[0]);
-            Spells.CharmPerson.Cast(Monsters.NightHag, 10, SpellLevel.SECOND, 10, Monsters.GiantBadger); // not affected
+            Combattant hag = Monsters.NightHag;
+            Combattant badger = Monsters.GiantBadger;
+            Spells.CharmPerson.Cast(Monsters.NightHag, 10, SpellLevel.CANTRIP, 10);
+            Spells.CharmPerson.Cast(createBattleground(hag, badger), hag, 10, SpellLevel.SECOND, 10, badger); // not affected
             DefaultSpellTest(Spells.CharmPerson, 14, SpellLevel.SIXTH, ConditionType.CHARMED, null, null);
         }
 
         [Fact]
         public void HoldPersonTest() {
-            Spells.HoldPerson.Cast(Monsters.NightHag, 10, SpellLevel.SECOND, 10, Monsters.GiantBadger); // not affected
+            Combattant hag = Monsters.NightHag;
+            Combattant badger = Monsters.GiantBadger;
             CharacterSheet hero = new CharacterSheet(Race.HUMAN);
+            Spells.HoldPerson.Cast(createBattleground(hag, badger), hag, 10, SpellLevel.SECOND, 10, badger); // not affected
+
             hero.AddEffect(Effect.IMMUNITY_PARALYZED);
-            Spells.HoldPerson.Cast(Monsters.NightHag, 10, SpellLevel.SECOND, 10, hero); // immune to paralyze
+            Spells.HoldPerson.Cast(createBattleground(hag, hero), hag, 10, SpellLevel.SECOND, 10, hero); // immune to paralyze
             DefaultSpellTest(Spells.HoldPerson, 14, SpellLevel.SEVENTH, ConditionType.PARALYZED, null, 100);
         }
 
@@ -216,7 +232,7 @@ namespace srd5 {
         public void LongStriderTest() {
             CharacterSheet hero = new CharacterSheet(Race.GNOME);
             int speed = hero.Speed;
-            Spells.Longstrider.Cast(hero, 10, SpellLevel.FIRST, 0, hero);
+            Spells.Longstrider.Cast(hero, 10, SpellLevel.FIRST, 0);
             Assert.True(hero.Speed > speed);
             hero.RemoveEffect(Effect.LONGSTRIDER);
             Assert.Equal(speed, hero.Speed);
@@ -272,7 +288,7 @@ namespace srd5 {
         [Fact]
         public void ResistanceTest() {
             CharacterSheet hero = new CharacterSheet(Race.GNOME);
-            Spells.Resistance.Cast(hero, 10, SpellLevel.FIRST, 0, hero);
+            Spells.Resistance.Cast(hero, 10, SpellLevel.FIRST, 0);
             Assert.True(hero.HasEffect(Effect.RESISTANCE));
             hero.DC(null, 10, AbilityType.STRENGTH);
             Assert.False(hero.HasEffect(Effect.RESISTANCE));

@@ -79,15 +79,14 @@ namespace srd5 {
         }
         public static readonly AttackEffect HomunculusBiteEffect = delegate (Combattant attacker, Combattant target) {
             if (target.IsImmune(DamageType.POISON)) return;
-            int dc;
-            if (target.DC(HomunculusBite, 10, AbilityType.CONSTITUTION, out dc)) return;
+            if (target.DC(HomunculusBite, 10, AbilityType.CONSTITUTION, out int dc)) return;
             if (dc < 6) {
                 target.AddEffect(Effect.HOMUNCULUS_POISON_UNCONCIOUSNESS);
                 int duration = Dice.D10.Value * 10;
                 int turnsPassed = 0;
-                target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+                target.AddEndOfTurnEvent(delegate () {
                     if (++turnsPassed > duration) {
-                        combattant.RemoveEffect(Effect.HOMUNCULUS_POISON_UNCONCIOUSNESS);
+                        target.RemoveEffect(Effect.HOMUNCULUS_POISON_UNCONCIOUSNESS);
                         return true;
                     }
                     return false;
@@ -95,9 +94,9 @@ namespace srd5 {
             } else {
                 target.AddEffect(Effect.HOMUNCULUS_POISON);
                 int turnsPassed = 0;
-                target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+                target.AddEndOfTurnEvent(delegate () {
                     if (++turnsPassed > 10) {
-                        combattant.RemoveEffect(Effect.HOMUNCULUS_POISON);
+                        target.RemoveEffect(Effect.HOMUNCULUS_POISON);
                         return true;
                     }
                     return false;
@@ -111,20 +110,18 @@ namespace srd5 {
         }
         public static readonly AttackEffect HornedDevilTailEffect = delegate (Combattant attacker, Combattant target) {
             // do not affect undead and constructs
-            if (target is Monster monster) {
-                if (monster.Type == Monsters.Type.UNDEAD || monster.Type == Monsters.Type.CONSTRUCT) return;
-            }
+            if (target is Monster monster && (monster.Type == Monsters.Type.UNDEAD || monster.Type == Monsters.Type.CONSTRUCT)) return;
             if (target.DC(BeardedDevilGlaive, 17, AbilityType.CONSTITUTION)) return;
             // TODO: Any creature can take an action to stanch the wound with a successful DC 12 Wisdom (Medicine) check.
             // The wound also closes if the target receives magical healing.
             // add infernal wound affect if newly applied
             if (!target.HasEffect(Effect.INFERNAL_WOUND_HORNED_DEVIL)) {
-                target.AddStartOfTurnEvent(delegate (Combattant combattant) {
-                    foreach (Effect effect in combattant.Effects) {
+                target.AddStartOfTurnEvent(delegate () {
+                    foreach (Effect effect in target.Effects) {
                         if (effect != Effect.INFERNAL_WOUND_HORNED_DEVIL) continue;
-                        combattant.TakeDamage(DamageType.TRUE_DAMAGE, "3d6");
+                        target.TakeDamage(DamageType.TRUE_DAMAGE, "3d6");
                     }
-                    return combattant.HasEffect(Effect.INFERNAL_WOUND_HORNED_DEVIL);
+                    return target.HasEffect(Effect.INFERNAL_WOUND_HORNED_DEVIL);
                 });
             }
             // increase infernal wound stack by one

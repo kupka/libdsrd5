@@ -92,11 +92,11 @@ namespace srd5 {
                         GlobalEvents.AffectBySpell(caster, ID.ENTANGLE, target, true);
                         target.AddEffect(Effect.ENTANGLE);
                         int rounds = 10;
-                        target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+                        target.AddEndOfTurnEvent(delegate () {
                             rounds--;
                             bool done = rounds <= 0;
                             if (done)
-                                combattant.RemoveEffect(Effect.ENTANGLE);
+                                target.RemoveEffect(Effect.ENTANGLE);
                             return done;
                         });
                     }
@@ -117,11 +117,11 @@ namespace srd5 {
                         GlobalEvents.AffectBySpell(caster, ID.FAERIE_FIRE, target, true);
                         target.AddEffect(Effect.FAIRIE_FIRE);
                         int rounds = 10;
-                        target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+                        target.AddEndOfTurnEvent(delegate () {
                             rounds--;
                             bool done = rounds <= 0;
                             if (done)
-                                combattant.RemoveEffect(Effect.FAIRIE_FIRE);
+                                target.RemoveEffect(Effect.FAIRIE_FIRE);
                             return done;
                         });
                     }
@@ -244,7 +244,40 @@ namespace srd5 {
         /* TODO */
         public static readonly Spell SilentImage = new Spell(Spells.ID.SILENT_IMAGE, SpellSchool.ILLUSION, SpellLevel.FIRST, CastingTime.ONE_ACTION, 60, VSM, SpellDuration.TEN_MINUTES, 15, 0, doNothing);
         /* TODO */
-        public static readonly Spell Sleep = new Spell(Spells.ID.SLEEP, SpellSchool.ENCHANTMENT, SpellLevel.FIRST, CastingTime.ONE_ACTION, 90, VSM, SpellDuration.ONE_MINUTE, 20, 99, doNothing);
+        public static readonly Spell Sleep = new Spell(Spells.ID.SLEEP, SpellSchool.ENCHANTMENT, SpellLevel.FIRST, CastingTime.ONE_ACTION, 90, VSM, SpellDuration.ONE_MINUTE, 20, 99,
+            delegate (Battleground ground, Combattant caster, int dc, SpellLevel slot, int modifier, Combattant[] targets) {
+                Dices dices = new Dices(5 + ((int)slot - 1) * 2, Dice.D8.MaxValue, 0);
+                int remainingHitpoints = dices.Roll();
+                Array.Sort(targets, (t1, t2) => {
+                    return t1.HitPoints.CompareTo(t2.HitPoints);
+                });
+                for (int i = 0; i < targets.Length && targets[i].HitPoints <= remainingHitpoints; i++) {
+                    Combattant target = targets[i];
+                    // ignoring unconscious creatures
+                    if (target.HasCondition(ConditionType.UNCONSCIOUS)) continue;
+                    // Undead and creatures immune to being charmed aren't affected by this spell
+                    if (target.HasEffect(Effect.IMMUNITY_CHARMED)) continue;
+                    if (target is Monster monster && monster.Type == Monsters.Type.UNDEAD) continue;
+                    // substract hitpoints and make target unconcious for one minute (10 rounds)
+                    int remainingRounds = 10;
+                    remainingHitpoints -= target.HitPoints;
+                    target.AddCondition(ConditionType.UNCONSCIOUS);
+                    bool targetTookDamage = false;
+                    target.AddDamageTakenEvent(delegate () {
+                        targetTookDamage = true;
+                        return true;
+                    });
+
+                    target.AddEndOfTurnEvent(delegate () {
+                        remainingRounds--;
+                        if (targetTookDamage || remainingRounds < 1) {
+                            target.RemoveCondition(ConditionType.UNCONSCIOUS);
+                            return true;
+                        }
+                        return false;
+                    });
+                }
+            });
 
         public static readonly Spell SpeakWithAnimals = new Spell(
             ID.SPEAK_WITH_ANIMALS, SpellSchool.DIVINATION, SpellLevel.FIRST, CastingTime.ONE_ACTION, 0, VS,

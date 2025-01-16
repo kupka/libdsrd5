@@ -14,7 +14,7 @@ namespace srd5 {
                 return ID.Name();
             }
         }
-        private SpellCastEffect cast;
+        private readonly SpellCastEffect cast;
 
         public Spell(Spells.ID id, SpellSchool school, SpellLevel level, CastingTime castingTime,
                      int range, SpellComponent[] components, SpellDuration duration,
@@ -31,10 +31,15 @@ namespace srd5 {
             cast = effect;
         }
 
-        public void Cast(Combattant caster, int dc, SpellLevel slot, int modifier, params Combattant[] targets) {
-            cast(null, caster, dc, slot, modifier, targets);
+        /* Cast a Spell that doesn't require a battleground, because it does not target
+           anyone other or only the caster */
+        public void Cast(Combattant caster, int dc, SpellLevel slot, int modifier) {
+            BattleGroundClassic ground = new BattleGroundClassic();
+            ground.AddCombattant(caster, ClassicLocation.Row.FRONT_LEFT);
+            cast(ground, caster, dc, slot, modifier, caster);
         }
 
+        /* Cast a spell on one or more targets */
         public void Cast(Battleground ground, Combattant caster, int dc, SpellLevel slot, int modifier, params Combattant[] targets) {
             cast(ground, caster, dc, slot, modifier, targets);
         }

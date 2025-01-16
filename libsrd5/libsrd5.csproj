@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>libsrd5</PackageId>
-    <Version>0.2.0</Version>
+    <Version>0.3.0</Version>
     <Authors>Thomas Kupka</Authors>
     <Company>Thomas Kupka</Company>
     <RepositoryUrl>https://github.com/kupka/libsrd5</RepositoryUrl>

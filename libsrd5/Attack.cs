@@ -36,7 +36,7 @@ namespace srd5 {
                     }
                 }
             }
-            target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+            target.AddEndOfTurnEvent(delegate () {
                 if (!target.HasCondition(grapplingType)) {
                     if (withRestrained)
                         target.RemoveCondition(ConditionType.RESTRAINED);

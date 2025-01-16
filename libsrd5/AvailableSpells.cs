@@ -53,7 +53,7 @@ namespace srd5 {
         /// Calculates the spell cast DC for the Monster. Assumes that this object belongs to this Monster.
         /// </summary>
         public int GetSpellCastDC(Combattant combattant) {
-            if (combattant is CharacterSheet) return GetSpellCastDC((CharacterSheet)combattant);
+            if (combattant is CharacterSheet characterSheet) return GetSpellCastDC(characterSheet);
             Monster monster = (Monster)combattant;
             return monster.SpellCastDC;
         }

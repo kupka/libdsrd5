@@ -7,7 +7,7 @@ namespace srd5 {
     [Collection("SingleThreaded")]
     public class GlobalEventsTest {
         private int initiative = 0, attacked = 0, healed = 0, damaged = 0, dc = 0, conditions = 0, spells = 0,
-                    failedAction = 0, equipment = 0, effects = 0, unkown = 0;
+                    failedAction = 0, equipment = 0, effects = 0, spellsWithoutEffect = 0, unkown = 0;
         private void eventListener(object sender, EventArgs args) {
             if (GlobalEvents.EventTypes.INITIATIVE.Equals(sender)) {
                 initiative++;
@@ -29,6 +29,8 @@ namespace srd5 {
                 equipment++;
             } else if (GlobalEvents.EventTypes.EFFECT_ACTIVATED.Equals(sender)) {
                 effects++;
+            } else if (GlobalEvents.EventTypes.SPELL_WITHOUT_EFFECT.Equals(sender)) {
+                spellsWithoutEffect++;
             } else {
                 unkown++;
             }
@@ -55,6 +57,7 @@ namespace srd5 {
             Assert.False(failedAction == 0);
             Assert.False(equipment == 0);
             Assert.False(effects == 0);
+            Assert.False(spellsWithoutEffect == 0);
             Assert.True(unkown == 0);
         }
     }

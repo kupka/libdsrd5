@@ -31,12 +31,12 @@ namespace srd5 {
             if (target.DC(DeepGnomeSvirfneblinPoisonedDart, 12, AbilityType.CONSTITUTION)) return;
             target.AddCondition(ConditionType.POISONED);
             int turn = 0;
-            target.AddEndOfTurnEvent(delegate (Combattant combattant) {
+            target.AddEndOfTurnEvent(delegate () {
                 if (turn++ > 9) {
-                    combattant.RemoveCondition(ConditionType.POISONED);
+                    target.RemoveCondition(ConditionType.POISONED);
                     return true;
-                } else if (combattant.DC(DeepGnomeSvirfneblinPoisonedDart, 12, AbilityType.CONSTITUTION)) {
-                    combattant.RemoveCondition(ConditionType.POISONED);
+                } else if (target.DC(DeepGnomeSvirfneblinPoisonedDart, 12, AbilityType.CONSTITUTION)) {
+                    target.RemoveCondition(ConditionType.POISONED);
                     return true;
                 }
                 return false;
@@ -139,14 +139,13 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect DrowHandCrossbowEffect = delegate (Combattant attacker, Combattant target) {
-            int value;
             if (target.IsImmune(DamageType.POISON)) return;
-            if (target.DC(DrowHandCrossbow, 13, AbilityType.CONSTITUTION, out value)) return;
+            if (target.DC(DrowHandCrossbow, 13, AbilityType.CONSTITUTION, out int value)) return;
             target.AddEffect(Effect.DROW_POISON);
             if (value < 9) {
                 target.AddCondition(ConditionType.UNCONSCIOUS);
             }
-            target.AddDamageTakenEvent(delegate (Combattant combattant) {
+            target.AddDamageTakenEvent(delegate () {
                 if (!target.HasEffect(Effect.DROW_POISON)) return true;
                 target.RemoveEffect(Effect.DROW_POISON);
                 target.RemoveCondition(ConditionType.UNCONSCIOUS);

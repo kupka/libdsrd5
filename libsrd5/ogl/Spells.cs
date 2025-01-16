@@ -63,7 +63,14 @@ namespace srd5 {
     public delegate void SpellCastEffect(Battleground ground, Combattant caster, int dc, SpellLevel slot, int modifier, params Combattant[] targets);
 
     public partial struct Spells {
-        private static SpellCastEffect doNothing = delegate (Battleground ground, Combattant caster, int dc, SpellLevel slot, int modifier, Combattant[] targets) { };
+        private static readonly SpellCastEffect doNothing = delegate (Battleground ground, Combattant caster, int dc, SpellLevel slot, int modifier, Combattant[] targets) { };
+
+        private static SpellCastEffect SpellWithoutEffect(ID spell) {
+            return delegate (Battleground ground, Combattant caster, int dc, SpellLevel slot, int modifier, Combattant[] targets) {
+                GlobalEvents.EffectlessSpell(caster, spell);
+            };
+        }
+
 
         private static SpellComponent[] S {
             get {
@@ -422,7 +429,36 @@ namespace srd5 {
             WISH,
             WORD_OF_RECALL,
             ZONE_OF_TRUTH,
+        }
 
+        public static Damage DamageLevelScaling(Combattant caster, Dice dice, DamageType damageType) {
+            return new Damage(damageType, DicesLevelScaling(caster) + dice.ToString());
+        }
+
+        public static int DicesLevelScaling(Combattant caster) {
+            int dices = 1;
+            if (caster.EffectiveLevel > 16)
+                dices = 4;
+            else if (caster.EffectiveLevel > 10)
+                dices = 3;
+            else if (caster.EffectiveLevel > 4)
+                dices = 2;
+            return dices;
+        }
+
+        public enum DCEffect {
+            NO_EFFECT,
+            HALVES_DAMAGE,
+            NULLIFIES_DAMAGE
+        }
+
+        public static bool SpellAttack(Spells.ID id, Battleground ground, Combattant caster, Damage damage, int modifier, Combattant target, int range, DCEffect dCEffect = DCEffect.NO_EFFECT, int dc = 0) {
+            int bonus = modifier + caster.ProficiencyBonus;
+            Attack attack = new Attack(id.Name(), bonus, damage, 0, range, range);
+            int distance = ground.LocateCombattant(caster).Distance(ground.LocateCombattant(target));
+            bool hit = caster.Attack(attack, target, distance, true, true);
+            GlobalEvents.AffectBySpell(caster, id, target, hit);
+            return hit;
         }
     }
 }

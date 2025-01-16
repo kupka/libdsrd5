@@ -121,8 +121,7 @@ namespace srd5 {
 
         private static void applyUnconcious(Combattant combattant) {
             applyParalyzed(combattant);
-            if (combattant is CharacterSheet) {
-                CharacterSheet sheet = (CharacterSheet)combattant;
+            if (combattant is CharacterSheet sheet) {
                 sheet.Unequip(sheet.Inventory.MainHand);
                 sheet.Unequip(sheet.Inventory.OffHand);
             }

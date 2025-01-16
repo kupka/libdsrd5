@@ -36,7 +36,7 @@ namespace srd5 {
             target.AddConditions(ConditionType.BLINDED, ConditionType.RESTRAINED);
             // TODO: it has total cover against attacks and other effects outside the kraken
             // and it takes 42 (12d6) acid damage at the start of each of the kraken's turns
-            attacker.AddStartOfTurnEvent(delegate (Combattant combattant) {
+            attacker.AddStartOfTurnEvent(delegate () {
                 if (!(target.HasEffect(Effect.KRAKEN_SWALLOW))) return true;
                 target.TakeDamage(DamageType.ACID, "12d6");
                 return false;
