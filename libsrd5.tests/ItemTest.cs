@@ -76,7 +76,7 @@ namespace srd5 {
             Consumable[] potions = new Consumable[] { Potions.PotionOfHealing, Potions.PotionOfGreaterHealing,
                                     Potions.PotionOfSuperiorHealing, Potions.PotionOfSupremeHealing };
             foreach (Consumable potion in potions) {
-                hero.TakeDamage(DamageType.SLASHING, hero.HitPointsMax);
+                hero.TakeDamage(this, DamageType.SLASHING, hero.HitPointsMax);
                 Assert.True(hero.HasEffect(Effect.FIGHTING_DEATH));
                 hero.Consume(potion);
                 Assert.False(hero.HasEffect(Effect.FIGHTING_DEATH));

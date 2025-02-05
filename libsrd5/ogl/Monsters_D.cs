@@ -73,9 +73,9 @@ namespace srd5 {
         }
         public static readonly AttackEffect DjinniScimitarEffect = delegate (Combattant attacker, Combattant target) {
             if (Die.D20.Value > 10) {
-                target.TakeDamage(DamageType.LIGHTNING, "1d6");
+                target.TakeDamage(attacker, DamageType.LIGHTNING, "1d6");
             } else {
-                target.TakeDamage(DamageType.THUNDER, "1d6");
+                target.TakeDamage(attacker, DamageType.THUNDER, "1d6");
             }
         };
         public static Attack DjinniScimitar {
@@ -145,7 +145,7 @@ namespace srd5 {
             if (value < 9) {
                 target.AddCondition(ConditionType.UNCONSCIOUS);
             }
-            target.AddDamageTakenEvent(delegate () {
+            target.AddDamageTakenEvent(delegate (object source, Damage damage) {
                 if (!target.HasEffect(Effect.DROW_POISON)) return true;
                 target.RemoveEffect(Effect.DROW_POISON);
                 target.RemoveCondition(ConditionType.UNCONSCIOUS);

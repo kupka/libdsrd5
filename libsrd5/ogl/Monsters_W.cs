@@ -197,7 +197,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WightLifeDrainEffect = delegate (Combattant attacker, Combattant target) {
-            int damage = target.TakeDamage(DamageType.NECROTIC, "1d6+2");
+            int damage = target.TakeDamage(attacker, DamageType.NECROTIC, "1d6+2");
             target.AddHitPointMaximumModifiers(new HitPointMaxiumModifier(-damage, HitPointMaxiumModifier.RemovedByEffect.LONG_REST));
             if (target.HitPointsMax == 0) {
                 target.Die();
@@ -257,7 +257,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect WraithLifeDrainEffect = delegate (Combattant attacker, Combattant target) {
-            int damage = target.TakeDamage(DamageType.NECROTIC, "4d8+3");
+            int damage = target.TakeDamage(attacker, DamageType.NECROTIC, "4d8+3");
             target.AddHitPointMaximumModifiers(new HitPointMaxiumModifier(-damage, HitPointMaxiumModifier.RemovedByEffect.LONG_REST));
             if (target.HitPointsMax == 0) {
                 target.Die();

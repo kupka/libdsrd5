@@ -79,20 +79,20 @@ namespace srd5 {
                     Assert.True(pansyMonsterThatDies.Dead);
                 }
                 for (int j = 0; j < 20; j++) {
-                    uberMonster.TakeDamage(randomDamageType(), Die.D4.Value);
+                    uberMonster.TakeDamage(effect, randomDamageType(), Die.D4.Value);
                     uberMonster.EscapeFromGrapple();
                     uberMonster.OnStartOfTurn();
                     uberMonster.OnEndOfTurn();
-                    averageMonster.TakeDamage(randomDamageType(), Die.D4.Value);
+                    averageMonster.TakeDamage(effect, randomDamageType(), Die.D4.Value);
                     averageMonster.EscapeFromGrapple();
                     averageMonster.OnStartOfTurn();
                     averageMonster.OnEndOfTurn();
-                    pansyMonster.TakeDamage(randomDamageType(), Die.D4.Value);
+                    pansyMonster.TakeDamage(effect, randomDamageType(), Die.D4.Value);
                     pansyMonster.EscapeFromGrapple();
                     pansyMonster.OnStartOfTurn();
                     pansyMonster.OnEndOfTurn();
                     foreach (Combattant combattant in allCombattantTypes) {
-                        combattant.TakeDamage(randomDamageType(), Die.D4.Value);
+                        combattant.TakeDamage(effect, randomDamageType(), Die.D4.Value);
                         combattant.EscapeFromGrapple();
                         combattant.OnStartOfTurn();
                         combattant.OnEndOfTurn();
@@ -460,13 +460,13 @@ namespace srd5 {
             Combattant target3 = createPansyMonster();
             Attacks.CouatlBiteEffect.Invoke(Monsters.Aboleth, target1);
             target1.RemoveEffect(Effect.COUATL_POISON);
-            target1.TakeDamage(DamageType.TRUE_DAMAGE, 1);
+            target1.TakeDamage(this, DamageType.TRUE_DAMAGE, 1);
             Attacks.CouatlBiteEffect.Invoke(Monsters.Aboleth, target2);
             target2.RemoveEffect(Effect.COUATL_POISON);
-            target2.TakeDamage(DamageType.TRUE_DAMAGE, 1);
+            target2.TakeDamage(this, DamageType.TRUE_DAMAGE, 1);
             Attacks.CouatlBiteEffect.Invoke(Monsters.Aboleth, target3);
             target3.RemoveEffect(Effect.COUATL_POISON);
-            target3.TakeDamage(DamageType.TRUE_DAMAGE, 1);
+            target3.TakeDamage(this, DamageType.TRUE_DAMAGE, 1);
             Assert.False(target1.HasCondition(ConditionType.UNCONSCIOUS) && target2.HasCondition(ConditionType.UNCONSCIOUS) && target3.HasCondition(ConditionType.UNCONSCIOUS));
         }
 
@@ -545,9 +545,9 @@ namespace srd5 {
             target1.RemoveEffect(Effect.DROW_POISON);
             target2.RemoveEffect(Effect.DROW_POISON);
             target3.RemoveEffect(Effect.DROW_POISON);
-            target1.TakeDamage(DamageType.TRUE_DAMAGE, 1);
-            target2.TakeDamage(DamageType.TRUE_DAMAGE, 1);
-            target3.TakeDamage(DamageType.TRUE_DAMAGE, 1);
+            target1.TakeDamage(this, DamageType.TRUE_DAMAGE, 1);
+            target2.TakeDamage(this, DamageType.TRUE_DAMAGE, 1);
+            target3.TakeDamage(this, DamageType.TRUE_DAMAGE, 1);
         }
 
         [Fact]

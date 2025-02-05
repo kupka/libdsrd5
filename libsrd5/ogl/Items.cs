@@ -71,7 +71,7 @@ namespace srd5 {
         private static Weapon createMagicWeapon(Weapon input, string name, WeaponProperty[] props) {
             return new Weapon(
                 name,
-                input.Damage.Dices.ToString(),
+                input.Damage.Dice.ToString(),
                 input.Damage.Type,
                 props,
                 input.Proficiencies,
@@ -612,6 +612,12 @@ namespace srd5 {
                            new ArmorProperty[] { ArmorProperty.HEAVY, ArmorProperty.STEALTH_DISADVANTAGE, ArmorProperty.METAL }, 150000, 65);
             }
         }
+
+        public static Armor MageArmor {
+            get {
+                return new Armor("Mage armor", 13, 10, 0, Proficiency.LIGHT_ARMOR, new ArmorProperty[] { }, 0, 0);
+            }
+        }
     }
 
     public struct Rings {
@@ -673,6 +679,16 @@ namespace srd5 {
                     potion.Charges = 0;
                     potion.Destroyed = true;
                 }, ItemRarity.VERY_RARE);
+            }
+        }
+
+        public static Consumable Goodberry {
+            get {
+                return new Consumable("Goodberry", ItemType.POTION, delegate (Combattant consumer, Consumable berry) {
+                    consumer.HealDamage(1);
+                    berry.Charges = 0;
+                    berry.Destroyed = true;
+                }, ItemRarity.COMMON);
             }
         }
     }

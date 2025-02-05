@@ -13,22 +13,22 @@ namespace srd5 {
             ogre.AddEffect(Effect.RESISTANCE_LIGHTNING);
             int hp = ogre.HitPoints;
             Damage cold = new Damage(DamageType.COLD, "1d6+5");
-            ogre.TakeDamage(cold.Type, cold.Dices.RollCritical());
+            ogre.TakeDamage(ogre, cold.Type, cold.Dice.RollCritical());
             Assert.InRange<int>(ogre.HitPoints, hp - 34, hp - 14);
             hp = ogre.HitPoints;
             Damage acid = new Damage(DamageType.ACID, "1d4+3");
-            ogre.TakeDamage(acid.Type, acid.Dices.Roll());
+            ogre.TakeDamage(ogre, acid.Type, acid.Dice.Roll());
             Assert.Equal(hp, ogre.HitPoints);
             Damage lightning = new Damage(DamageType.LIGHTNING, "1d12");
-            ogre.TakeDamage(lightning.Type, lightning.Dices.Roll());
+            ogre.TakeDamage(ogre, lightning.Type, lightning.Dice.Roll());
             Assert.InRange<int>(ogre.HitPoints, hp - 6, hp);
             Assert.Throws<Srd5ArgumentException>(delegate {
-                ogre.TakeDamage(DamageType.ACID, -100);
+                ogre.TakeDamage(this, DamageType.ACID, -100);
             });
             Assert.Throws<Srd5ArgumentException>(delegate {
                 ogre.HealDamage(-100);
             });
-            ogre.TakeDamage(DamageType.PIERCING, ogre.HitPoints);
+            ogre.TakeDamage(this, DamageType.PIERCING, ogre.HitPoints);
             Assert.True(ogre.Dead);
         }
 
@@ -37,7 +37,7 @@ namespace srd5 {
             Combattant ogre = Monsters.Ogre;
             int tookFullDamage = 0, tookHalfDamage = 0;
             for (int i = 0; i < 10; i++) {
-                int damageTaken = ogre.TakeDamage(DamageType.TRUE_DAMAGE, 2, Spells.DCEffect.HALVES_DAMAGE, 10, AbilityType.DEXTERITY);
+                int damageTaken = ogre.TakeDamage(this, DamageType.TRUE_DAMAGE, 2, Spells.DCEffect.HALVES_DAMAGE, 10, AbilityType.DEXTERITY, out _);
                 if (damageTaken == 2) {
                     tookFullDamage++;
                 } else if (damageTaken == 1) {
@@ -52,7 +52,7 @@ namespace srd5 {
             Combattant ogre = Monsters.Ogre;
             int tookFullDamage = 0, tookNoDamage = 0;
             for (int i = 0; i < 10; i++) {
-                int damageTaken = ogre.TakeDamage(DamageType.TRUE_DAMAGE, 2, Spells.DCEffect.NULLIFIES_DAMAGE, 10, AbilityType.DEXTERITY);
+                int damageTaken = ogre.TakeDamage(this, DamageType.TRUE_DAMAGE, 2, Spells.DCEffect.NULLIFIES_DAMAGE, 10, AbilityType.DEXTERITY, out _);
                 if (damageTaken == 2) {
                     tookFullDamage++;
                 } else if (damageTaken == 0) {

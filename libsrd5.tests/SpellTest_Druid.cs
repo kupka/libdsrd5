@@ -133,63 +133,103 @@ namespace srd5 {
             Spells.Shillelagh.Cast(Monsters.Goblin, 0, SpellLevel.CANTRIP, 3);
         }
 
-        private void DefaultSpellTest(Spell spell, int dc, SpellLevel slot, ConditionType? checkForCondition, Effect? checkForEffect, int? simulateTurns) {
+        private void DefaultSpellTest(Spell spell, int dc, SpellLevel slot, ConditionType? checkForCondition, Effect? checkForEffect, int? simulateTurns, Monsters.Type monsterType = Monsters.Type.BEAST) {
+            if (checkForCondition == null && checkForEffect == null) throw new ArgumentException("Don't use is when not checking for Condition and/or Effect");
             CharacterSheet hero = new CharacterSheet(Race.DRAGONBORN, true);
             Monster orc1 = Monsters.Orc;
             Monster orc2 = Monsters.Orc;
             Monster orc3 = Monsters.Orc;
-            Monster orc4 = Monsters.Orc;
-            Monster orc5 = Monsters.Orc;
-            Monster orc6 = Monsters.Orc;
-            Battleground ground = createBattleground(hero, orc1, orc2, orc3, orc4, orc5, orc6);
+            Monster badger = Monsters.Badger;
+            Monster zombie = Monsters.Zombie;
+            Monster dragon = Monsters.AncientBlackDragon;
+            Monster typed = new Monster(monsterType, Monsters.ID.MANTICORE, Alignment.UNALIGNED, 10, 10, 10, 10, 10, 10, 10, "5d8", 30, 2, new Attack[0], new Attack[0], Size.MEDIUM, 5);
+            Monster typedImmune = new Monster(monsterType, Monsters.ID.MANTICORE, Alignment.UNALIGNED, 10, 10, 10, 10, 10, 10, 10, "5d8", 30, 2, new Attack[0], new Attack[0], Size.MEDIUM, 5);
+            typedImmune.AddEffects(Effect.IMMUNITY_ACID, Effect.IMMUNITY_BLINDED, Effect.IMMUNITY_BLUDGEONING, Effect.IMMUNITY_CHARMED, Effect.IMMUNITY_COLD, Effect.IMMUNITY_DAMAGE_FROM_SPELLS,
+                Effect.IMMUNITY_DEAFENED, Effect.IMMUNITY_EXHAUSTION, Effect.IMMUNITY_FIRE, Effect.IMMUNITY_FORCE, Effect.IMMUNITY_FRIGHTENED, Effect.IMMUNITY_GRAPPLED, Effect.IMMUNITY_INCAPACITATED,
+                Effect.IMMUNITY_INVISIBLE, Effect.IMMUNITY_LIGHTNING, Effect.IMMUNITY_NECROTIC, Effect.IMMUNITY_NONMAGIC, Effect.IMMUNITY_PARALYZED, Effect.IMMUNITY_PETRIFIED, Effect.IMMUNITY_PIERCING,
+                Effect.IMMUNITY_POISON, Effect.IMMUNITY_POISONED, Effect.IMMUNITY_PRONE, Effect.IMMUNITY_PSYCHIC, Effect.IMMUNITY_RADIANT, Effect.IMMUNITY_RESTRAINED, Effect.IMMUNITY_SLEEP,
+                Effect.IMMUNITY_SLEEP, Effect.IMMUNITY_STUNNED, Effect.IMMUNITY_THUNDER, Effect.IMMUNITY_UNCONSCIOUS);
+
+            Battleground ground = createBattleground(hero, orc1, orc2, orc3, badger, zombie, dragon);
             Random.State = 1;
             if (spell.MaximumTargets > 1) {
                 spell.Cast(ground, hero, dc, slot, 0, orc1, orc2);
-                spell.Cast(ground, hero, dc, slot, 0, orc3, orc4);
-                spell.Cast(ground, hero, dc, slot, 0, orc5, orc6);
+                spell.Cast(ground, hero, dc, slot, 0, orc3, badger);
+                spell.Cast(ground, hero, dc, slot, 0, zombie, dragon);
+                spell.Cast(ground, hero, dc, slot, 0, typed, typedImmune);
             } else {
                 spell.Cast(ground, hero, dc, slot, 0, orc1);
                 spell.Cast(ground, hero, dc, slot, 0, orc2);
                 spell.Cast(ground, hero, dc, slot, 0, orc3);
-                spell.Cast(ground, hero, dc, slot, 0, orc4);
-                spell.Cast(ground, hero, dc, slot, 0, orc5);
-                spell.Cast(ground, hero, dc, slot, 0, orc6);
+                spell.Cast(ground, hero, dc, slot, 0, badger);
+                spell.Cast(ground, hero, dc, slot, 0, zombie);
+                spell.Cast(ground, hero, dc, slot, 0, dragon);
+                spell.Cast(ground, hero, dc, slot, 0, typed);
+                spell.Cast(ground, hero, dc, slot, 0, typedImmune);
             }
             if (checkForCondition != null) {
                 ConditionType cond = (ConditionType)checkForCondition;
                 Assert.True(
-                    orc1.HasCondition(cond) || orc2.HasCondition(cond) || orc3.HasCondition(cond) || orc4.HasCondition(cond) || orc5.HasCondition(cond) || orc6.HasCondition(cond)
+                    orc1.HasCondition(cond) || orc2.HasCondition(cond) || orc3.HasCondition(cond) || badger.HasCondition(cond) || zombie.HasCondition(cond) || dragon.HasCondition(cond) || typed.HasCondition(cond)
                 );
+                Assert.False(typedImmune.HasCondition(cond));
             }
             if (checkForEffect != null) {
                 Effect eff = (Effect)checkForEffect;
                 Assert.True(
-                    orc1.HasEffect(eff) || orc2.HasEffect(eff) || orc3.HasEffect(eff) || orc4.HasEffect(eff) || orc5.HasEffect(eff) || orc6.HasEffect(eff)
+                    orc1.HasEffect(eff) || orc2.HasEffect(eff) || orc3.HasEffect(eff) || badger.HasEffect(eff) || zombie.HasEffect(eff) || dragon.HasEffect(eff) || typed.HasEffect(eff)
                 );
             }
             if (simulateTurns != null) {
                 int turns = (int)simulateTurns;
                 for (int i = 0; i < turns; i++) {
+                    hero.OnStartOfTurn();
+                    orc1.OnStartOfTurn();
+                    orc2.OnStartOfTurn();
+                    orc3.OnStartOfTurn();
+                    badger.OnStartOfTurn();
+                    zombie.OnStartOfTurn();
+                    dragon.OnStartOfTurn();
+                    typed.OnStartOfTurn();
+                    typedImmune.OnStartOfTurn();
+
+                    hero.OnEndOfTurn();
                     orc1.OnEndOfTurn();
                     orc2.OnEndOfTurn();
                     orc3.OnEndOfTurn();
-                    orc4.OnEndOfTurn();
-                    orc5.OnEndOfTurn();
-                    orc6.OnEndOfTurn();
+                    badger.OnEndOfTurn();
+                    zombie.OnEndOfTurn();
+                    dragon.OnEndOfTurn();
+                    typed.OnEndOfTurn();
+                    typedImmune.OnEndOfTurn();
                 }
                 if (checkForCondition != null) {
                     ConditionType cond = (ConditionType)checkForCondition;
                     Assert.False(
-                        orc1.HasCondition(cond) || orc2.HasCondition(cond) || orc3.HasCondition(cond) || orc4.HasCondition(cond) || orc5.HasCondition(cond) || orc6.HasCondition(cond)
+                        orc1.HasCondition(cond) || orc2.HasCondition(cond) || orc3.HasCondition(cond) || badger.HasCondition(cond) || zombie.HasCondition(cond) || dragon.HasCondition(cond) || typed.HasCondition(cond)
                     );
                 }
                 if (checkForEffect != null) {
                     Effect eff = (Effect)checkForEffect;
                     Assert.False(
-                        orc1.HasEffect(eff) || orc2.HasEffect(eff) || orc3.HasEffect(eff) || orc4.HasEffect(eff) || orc5.HasEffect(eff) || orc6.HasEffect(eff)
+                        orc1.HasEffect(eff) || orc2.HasEffect(eff) || orc3.HasEffect(eff) || badger.HasEffect(eff) || zombie.HasEffect(eff) || dragon.HasEffect(eff) || typed.HasEffect(eff)
                     );
                 }
             }
+        }
+
+        private void DamagingSpellTesting(Spell spell, int dc, DamageType damageType) {
+            Monster hag = Monsters.NightHag;
+            Monster monster1 = Monsters.Bandit;
+            Monster monster2 = Monsters.Baboon;
+            monster2.AddEffect(Enum.Parse<Effect>("IMMUNITY_" + Enum.GetName<DamageType>(damageType)));
+            Battleground ground = createBattleground(hag, monster1, monster2);
+            for (int i = 0; i < 10; i++) {
+                spell.Cast(ground, hag, dc, spell.Level, 0, monster1, monster2);
+                spell.Cast(ground, hag, dc, spell.Level, 0, monster2, monster1);
+            }
+            Assert.True(monster1.HitPoints < monster1.HitPointsMax);
+            Assert.True(monster2.HitPoints == monster2.HitPointsMax);
         }
 
         [Fact]
@@ -215,17 +255,17 @@ namespace srd5 {
 
         [Fact]
         public void EntangleTest() {
-            DefaultSpellTest(Spells.Entangle, 14, SpellLevel.FIRST, null, Effect.ENTANGLE, 100);
+            DefaultSpellTest(Spells.Entangle, 14, SpellLevel.FIRST, null, Effect.SPELL_ENTANGLE, 100);
         }
 
         [Fact]
         public void FairieFireTest() {
-            DefaultSpellTest(Spells.FaerieFire, 14, SpellLevel.SECOND, null, Effect.FAIRIE_FIRE, 100);
+            DefaultSpellTest(Spells.FaerieFire, 14, SpellLevel.SECOND, null, Effect.SPELL_FAIRIE_FIRE, 100);
         }
 
         [Fact]
         public void JumpTest() {
-            DefaultSpellTest(Spells.Jump, 14, SpellLevel.THIRD, null, Effect.JUMP, null);
+            DefaultSpellTest(Spells.Jump, 14, SpellLevel.THIRD, null, Effect.SPELL_JUMP, null);
         }
 
         [Fact]
@@ -234,7 +274,7 @@ namespace srd5 {
             int speed = hero.Speed;
             Spells.Longstrider.Cast(hero, 10, SpellLevel.FIRST, 0);
             Assert.True(hero.Speed > speed);
-            hero.RemoveEffect(Effect.LONGSTRIDER);
+            hero.RemoveEffect(Effect.SPELL_LONGSTRIDER);
             Assert.Equal(speed, hero.Speed);
         }
 
@@ -289,9 +329,14 @@ namespace srd5 {
         public void ResistanceTest() {
             CharacterSheet hero = new CharacterSheet(Race.GNOME);
             Spells.Resistance.Cast(hero, 10, SpellLevel.FIRST, 0);
-            Assert.True(hero.HasEffect(Effect.RESISTANCE));
+            Assert.True(hero.HasEffect(Effect.SPELL_RESISTANCE));
             hero.DC(null, 10, AbilityType.STRENGTH);
-            Assert.False(hero.HasEffect(Effect.RESISTANCE));
+            Assert.False(hero.HasEffect(Effect.SPELL_RESISTANCE));
+        }
+
+        [Fact]
+        public void AnimalFriendshipTest() {
+            DefaultSpellTest(Spells.AnimalFriendship, 14, SpellLevel.FIRST, ConditionType.CHARMED, null, null, Monsters.Type.BEAST);
         }
     }
 }

@@ -381,8 +381,8 @@ namespace srd5 {
                 return false;
             }
             InnateSpellcasting innate = null;
-            if (CurrentCombattant is Monster) {
-                innate = ((Monster)CurrentCombattant).InnateSpellcastingBySpell(spell);
+            if (CurrentCombattant is Monster monster) {
+                innate = monster.InnateSpellcastingBySpell(spell);
             }
             // Check if innate Spell casting is available
             if (innate != null && innate.Frequency == InnateSpellcasting.Frequencies.AT_WILL) {

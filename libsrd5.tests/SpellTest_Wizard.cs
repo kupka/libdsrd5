@@ -54,7 +54,7 @@ namespace srd5 {
 
         [Fact]
         public void LightTest() {
-            DefaultSpellTest(Spells.Light, 12, SpellLevel.CANTRIP, null, Effect.LIGHT, null);
+            DefaultSpellTest(Spells.Light, 12, SpellLevel.CANTRIP, null, Effect.SPELL_LIGHT, null);
         }
 
         [Fact]
@@ -78,9 +78,9 @@ namespace srd5 {
             Spells.RayOfFrost.Cast(ground, wizard, 14, SpellLevel.CANTRIP, 0, shadow);
             wizard.AddLevels(CharacterClasses.Wizard, CharacterClasses.Wizard, CharacterClasses.Wizard, CharacterClasses.Wizard, CharacterClasses.Wizard);
             Spells.RayOfFrost.Cast(ground, wizard, 14, SpellLevel.CANTRIP, 0, shadow);
-            Assert.True(shadow.HasEffect(Effect.RAY_OF_FROST));
+            Assert.True(shadow.HasEffect(Effect.SPELL_RAY_OF_FROST));
             wizard.OnStartOfTurn();
-            Assert.False(shadow.HasEffect(Effect.RAY_OF_FROST));
+            Assert.False(shadow.HasEffect(Effect.SPELL_RAY_OF_FROST));
         }
 
         [Fact]
@@ -181,10 +181,37 @@ namespace srd5 {
                 badger2.OnEndOfTurn();
             }
             // wake up after damage taken
-            badger3.OnDamageTaken();
+            badger3.OnDamageTaken(hero, new Damage(DamageType.TRUE_DAMAGE, 1));
             badger3.OnEndOfTurn();
-            Assert.False(badger2.HasCondition(ConditionType.UNCONSCIOUS) || badger3.HasCondition(ConditionType.UNCONSCIOUS));
-            Assert.False(zombie.HasCondition(ConditionType.UNCONSCIOUS) || bandit.HasCondition(ConditionType.UNCONSCIOUS));
+            Assert.False(badger2.HasCondition(ConditionType.UNCONSCIOUS));
+            Assert.False(badger3.HasCondition(ConditionType.UNCONSCIOUS));
+            Assert.False(zombie.HasCondition(ConditionType.UNCONSCIOUS));
+            Assert.False(bandit.HasCondition(ConditionType.UNCONSCIOUS));
+        }
+
+        [Fact]
+        public void FalseLifeTest() {
+            Monster hag = Monsters.NightHag;
+            Spells.FalseLife.Cast(hag, 0, SpellLevel.FIRST, 0);
+            hag.TakeDamage(this, DamageType.FIRE, 1);
+            Assert.Equal(hag.HitPointsMax, hag.HitPoints);
+            hag.TakeDamage(this, DamageType.FIRE, 30);
+            Assert.True(hag.HitPointsMax > hag.HitPoints);
+            hag.HealDamage(100);
+            Spells.FalseLife.Cast(hag, 0, SpellLevel.NINETH, 0);
+            Spells.FalseLife.Cast(hag, 0, SpellLevel.THIRD, 0);
+            hag.TakeDamage(this, DamageType.FIRE, 30);
+            Assert.Equal(hag.HitPointsMax, hag.HitPoints);
+        }
+
+        [Fact]
+        public void BurningHandsTest() {
+            DamagingSpellTesting(Spells.BurningHands, 12, DamageType.FIRE);
+        }
+
+        [Fact]
+        public void ColorSprayTest() {
+            DefaultSpellTest(Spells.ColorSpray, 12, SpellLevel.FIRST, ConditionType.BLINDED, null, 1);
         }
     }
 }

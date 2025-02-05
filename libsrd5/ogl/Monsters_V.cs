@@ -9,7 +9,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect VampireBiteEffect = delegate (Combattant attacker, Combattant target) {
-            int damage = target.TakeDamage(DamageType.NECROTIC, "3d6");
+            int damage = target.TakeDamage(attacker, DamageType.NECROTIC, "3d6");
             target.AddHitPointMaximumModifiers(new HitPointMaxiumModifier(-damage, HitPointMaxiumModifier.RemovedByEffect.LONG_REST));
             attacker.HealDamage(damage);
             // TODO:  The target dies if this effect reduces its hit point maximum to 0. 
@@ -26,7 +26,7 @@ namespace srd5 {
             }
         }
         public static readonly AttackEffect VampireSpawnBiteEffect = delegate (Combattant attacker, Combattant target) {
-            int damage = target.TakeDamage(DamageType.NECROTIC, "2d6");
+            int damage = target.TakeDamage(attacker, DamageType.NECROTIC, "2d6");
             target.AddHitPointMaximumModifiers(new HitPointMaxiumModifier(-damage, HitPointMaxiumModifier.RemovedByEffect.LONG_REST));
             attacker.HealDamage(damage);
         };

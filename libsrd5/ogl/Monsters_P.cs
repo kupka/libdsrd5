@@ -18,7 +18,7 @@ namespace srd5 {
         public static readonly AttackEffect PhaseSpiderBiteEffect = delegate (Combattant attacker, Combattant target) {
             if (target.IsImmune(DamageType.POISON)) return;
             if (target.DC(PhaseSpiderBite, 12, AbilityType.CONSTITUTION)) return;
-            target.TakeDamage(DamageType.POISON, "4d8");
+            target.TakeDamage(attacker, DamageType.POISON, "4d8");
             if (target.HitPoints == 0) {
                 target.AddEffect(Effect.PHASE_SPIDER_POISON);
                 // TODO: remove after one hour "the target is stable but poisoned for 1 hour"

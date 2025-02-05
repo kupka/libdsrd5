@@ -158,22 +158,22 @@ namespace srd5 {
             Weapon club = Weapons.Club;
             sheet.Equip(club);
             Assert.Equal(7, sheet.AttackProficiency);
-            Assert.Equal("1d4+4", sheet.MeleeAttacks[0].Damage.Dices.ToString());
+            Assert.Equal("1d4+4", sheet.MeleeAttacks[0].Damage.Dice.ToString());
             Weapon clubPlus1 = Weapons.CreatePlus1Weapon(Weapons.Club);
             sheet.Unequip(club);
             sheet.Equip(clubPlus1);
             Assert.Equal(8, sheet.AttackProficiency);
-            Assert.Equal("1d4+5", sheet.MeleeAttacks[0].Damage.Dices.ToString());
+            Assert.Equal("1d4+5", sheet.MeleeAttacks[0].Damage.Dice.ToString());
             Weapon clubPlus2 = Weapons.CreatePlus2Weapon(Weapons.Club);
             sheet.Unequip(clubPlus1);
             sheet.Equip(clubPlus2);
             Assert.Equal(9, sheet.AttackProficiency);
-            Assert.Equal("1d4+6", sheet.MeleeAttacks[0].Damage.Dices.ToString());
+            Assert.Equal("1d4+6", sheet.MeleeAttacks[0].Damage.Dice.ToString());
             Weapon clubPlus3 = Weapons.CreatePlus3Weapon(Weapons.Club);
             sheet.Unequip(clubPlus2);
             sheet.Equip(clubPlus3);
             Assert.Equal(10, sheet.AttackProficiency);
-            Assert.Equal("1d4+7", sheet.MeleeAttacks[0].Damage.Dices.ToString());
+            Assert.Equal("1d4+7", sheet.MeleeAttacks[0].Damage.Dice.ToString());
         }
 
         [Fact]
@@ -334,8 +334,8 @@ namespace srd5 {
             Assert.Empty(sheet.RangedAttacks);
             Attack unarmed = sheet.MeleeAttacks[0];
             Assert.Equal(4, unarmed.AttackBonus);
-            Assert.Equal("1d1+2", unarmed.Damage.Dices.ToString());
-            Assert.Equal(3, unarmed.Damage.Dices.Roll());
+            Assert.Equal("1d1+2", unarmed.Damage.Dice.ToString());
+            Assert.Equal(3, unarmed.Damage.Dice.Roll());
         }
 
         [Fact]
@@ -386,13 +386,13 @@ namespace srd5 {
             CharacterSheet sheet = new CharacterSheet(Race.HALFLING);
             Weapon quarterstaff = Weapons.Quarterstaff;
             sheet.Equip(quarterstaff);
-            Assert.Equal(8, sheet.MeleeAttacks[0].Damage.Dices.Die);
+            Assert.Equal(8, sheet.MeleeAttacks[0].Damage.Dice.Die);
             int ac = sheet.ArmorClass;
             Shield shield = Shields.Shield;
             Assert.Equal(quarterstaff, sheet.Inventory.MainHand);
             sheet.Equip(shield);
             Assert.Equal(ac + shield.AC, sheet.ArmorClass);
-            Assert.Equal(6, sheet.MeleeAttacks[0].Damage.Dices.Die);
+            Assert.Equal(6, sheet.MeleeAttacks[0].Damage.Dice.Die);
         }
 
         [Fact]
@@ -473,7 +473,7 @@ namespace srd5 {
         public void LongRestTest() {
             CharacterSheet sheet = new CharacterSheet(Race.HALFLING);
             sheet.AddLevel(CharacterClasses.Barbarian);
-            sheet.TakeDamage(DamageType.SLASHING, 2);
+            sheet.TakeDamage(this, DamageType.SLASHING, 2);
             Assert.True(sheet.HitPointsMax > sheet.HitPoints);
             sheet.LongRest();
             Assert.Equal(sheet.HitPointsMax, sheet.HitPoints);
@@ -538,7 +538,7 @@ namespace srd5 {
         public void InstantDeathTest() {
             CharacterSheet hero = new CharacterSheet(Race.HALF_ELF);
             hero.AddLevel(CharacterClasses.Wizard);
-            hero.TakeDamage(DamageType.TRUE_DAMAGE, 100);
+            hero.TakeDamage(this, DamageType.TRUE_DAMAGE, 100);
             Assert.True(hero.Dead);
         }
 
@@ -549,7 +549,7 @@ namespace srd5 {
             for (int i = 0; i < 100; i++) {
                 CharacterSheet hero = new CharacterSheet(Race.HALF_ELF);
                 hero.AddLevel(CharacterClasses.Wizard);
-                hero.TakeDamage(DamageType.TRUE_DAMAGE, hero.HitPointsMax);
+                hero.TakeDamage(this, DamageType.TRUE_DAMAGE, hero.HitPointsMax);
                 Assert.True(hero.HasEffect(Effect.FIGHTING_DEATH));
                 for (int j = 0; j < 6; j++) {
                     hero.OnStartOfTurn();

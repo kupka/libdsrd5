@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 
 namespace srd5 {
     public enum SpellSchool {
@@ -431,11 +432,17 @@ namespace srd5 {
             ZONE_OF_TRUTH,
         }
 
+        /// <summary>
+        /// Scales damage by 4th, 10th and 17th level of the caster.
+        /// </summary>
         public static Damage DamageLevelScaling(Combattant caster, Die die, DamageType damageType) {
-            return new Damage(damageType, DicesLevelScaling(caster) + die.ToString());
+            return new Damage(damageType, DiceLevelScaling(caster) + die.ToString());
         }
 
-        public static int DicesLevelScaling(Combattant caster) {
+        /// <summary>
+        /// Scales dice by 4th, 10th and 17th level of the caster.
+        /// </summary>
+        public static int DiceLevelScaling(Combattant caster) {
             int dice = 1;
             if (caster.EffectiveLevel > 16)
                 dice = 4;
@@ -446,12 +453,35 @@ namespace srd5 {
             return dice;
         }
 
+        /// <summary>
+        /// Scales amount of dice based on the slot a spell is cast from
+        /// </summary>
+        /// <example>
+        /// DiceSlotScaling(SpellSlot.FIRST, SpellSlot.SECOND, 8, 3, 5, 2) results in a Dice that refers to "5d8+5",
+        /// since it adds 1 slot of 2 dice d8 to the base 3 dice with a modifier of 5
+        /// </example>
+        public static Dice DiceSlotScaling(SpellLevel minimumSlot, SpellLevel actualSlot, int die, int dice = 1, int modifier = 0, int additionalDiePerSlot = 1) {
+            if (minimumSlot > actualSlot) throw new Srd5ArgumentException("This spell cannot be cast at slot " + actualSlot);
+            int diff = (actualSlot - minimumSlot) * additionalDiePerSlot;
+            dice += diff;
+            string diceString = dice + "d" + die;
+            if (modifier > 0) diceString += "+" + modifier;
+            if (modifier < 0) diceString += modifier;
+            return new Dice(diceString);
+        }
+
+        /// <summary>
+        /// Defines the result of the successful DC
+        /// </summary>
         public enum DCEffect {
             NO_EFFECT,
             HALVES_DAMAGE,
             NULLIFIES_DAMAGE
         }
 
+        /// <summary>
+        /// Does a Spell Attack roll against the target, applies the damage. Returns whether the attack roll succeeded or not.
+        /// </summary>
         public static bool SpellAttack(ID id, Battleground ground, Combattant caster, Damage damage, int modifier, Combattant target, int range, DCEffect dCEffect = DCEffect.NO_EFFECT, int dc = 0) {
             int bonus = modifier + caster.ProficiencyBonus;
             Attack attack = new Attack(id.Name(), bonus, damage, 0, range, range);

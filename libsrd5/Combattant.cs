@@ -1,4 +1,5 @@
 using System;
+using System.Transactions;
 
 namespace srd5 {
     public class HitPointMaxiumModifier : GuidClass {
@@ -17,10 +18,30 @@ namespace srd5 {
             Amount = amount;
             RemovedBy = removedBy;
         }
-
     }
 
-    public abstract class Combattant {
+    public class TemporaryHitpoints {
+        public int Amount { get; private set; }
+
+        public object Source { get; private set; }
+
+        public SpellDuration Duration { get; private set; }
+
+        public TemporaryHitpoints(int amount, SpellDuration duration, object source) {
+            Amount = amount;
+            Duration = duration;
+            Source = source;
+        }
+
+        /* Absorb Damage. Returns amount of damage that could not be absorbed. */
+        public int Absorb(int amount) {
+            int spillOver = Math.Max(0, amount - Amount);
+            Amount = Math.Max(0, Amount - amount);
+            return spillOver;
+        }
+    }
+
+    public abstract class Combattant : GuidClass {
         public int Speed { get; internal set; } = 30;
         public virtual string Name { get; set; }
         public Alignment Alignment { get; set; }
@@ -81,20 +102,33 @@ namespace srd5 {
         }
         private HitPointMaxiumModifier[] hitPointMaxiumModifiers = new HitPointMaxiumModifier[0];
         public void AddHitPointMaximumModifiers(params HitPointMaxiumModifier[] modifiers) {
-            foreach (HitPointMaxiumModifier modifier in modifiers)
+            foreach (HitPointMaxiumModifier modifier in modifiers) {
                 Utils.PushUnique<HitPointMaxiumModifier>(ref hitPointMaxiumModifiers, modifier);
+            }
             if (HitPointsMax < HitPoints) HitPoints = HitPointsMax;
         }
 
         public void RemoveHitPointsMaximumModifiers(params HitPointMaxiumModifier[] modifiers) {
-            foreach (HitPointMaxiumModifier modifier in modifiers)
+            foreach (HitPointMaxiumModifier modifier in modifiers) {
                 Utils.RemoveSingle<HitPointMaxiumModifier>(ref hitPointMaxiumModifiers, modifier);
+            }
+        }
+
+        private TemporaryHitpoints temporaryHitpoints = new TemporaryHitpoints(0, SpellDuration.INSTANTANEOUS, null);
+
+        public void AddTemporaryHitpoints(int amount, SpellDuration duration, object source) {
+            if (temporaryHitpoints.Amount < amount) temporaryHitpoints = new TemporaryHitpoints(amount, duration, source);
+        }
+
+        public void RemoveTemporaryHitpoints(object source) {
+            if (temporaryHitpoints.Source == source) {
+                temporaryHitpoints = new TemporaryHitpoints(0, SpellDuration.INSTANTANEOUS, null);
+            }
         }
 
         public void AddEffect(Effect effect) {
             bool pushed = Utils.PushUnique<Effect>(ref effects, effect);
-            if (pushed)
-                effect.Apply(this);
+            if (pushed) effect.Apply(this);
         }
 
         public void AddEffects(params Effect[] effects) {
@@ -106,8 +140,7 @@ namespace srd5 {
         public void RemoveEffect(Effect effect) {
             RemoveResult result = Utils.RemoveSingle<Effect>(ref effects, effect);
             if (result == RemoveResult.NOT_FOUND) return;
-            if (result == RemoveResult.REMOVED_AND_GONE)
-                effect.Unapply(this);
+            if (result == RemoveResult.REMOVED_AND_GONE) effect.Unapply(this);
             // TODO: Check if multiple instances of Effects make sense at all
             // If so, probably REMOVED_BUT_REMAINS should be handled somehow
         }
@@ -140,8 +173,7 @@ namespace srd5 {
         public bool AddCondition(ConditionType condition) {
             // don't add if immune
             if (HasEffect(srd5.Effects.Immunity(condition))) return false;
-            if (Utils.PushUnique<ConditionType>(ref conditions, condition))
-                condition.Apply(this);
+            if (Utils.PushUnique<ConditionType>(ref conditions, condition)) condition.Apply(this);
             GlobalEvents.ChangedCondition(this, condition);
             return true;
         }
@@ -154,8 +186,7 @@ namespace srd5 {
 
         public void RemoveCondition(ConditionType condition) {
             RemoveResult result = Utils.RemoveSingle<ConditionType>(ref conditions, condition);
-            if (result == RemoveResult.REMOVED_AND_GONE)
-                condition.Unapply(this);
+            if (result == RemoveResult.REMOVED_AND_GONE) condition.Unapply(this);
             GlobalEvents.ChangedCondition(this, condition, true);
         }
 
@@ -209,8 +240,7 @@ namespace srd5 {
         public bool IsProficient(Item item) {
             if (item == null) return true;
             foreach (Proficiency proficiency in item.Proficiencies) {
-                if (IsProficient(proficiency))
-                    return true;
+                if (IsProficient(proficiency)) return true;
             }
             return false;
         }
@@ -221,33 +251,44 @@ namespace srd5 {
             return IsProficient(proficiency);
         }
 
-        public int TakeDamage(DamageType type, string amount) {
-            return TakeDamage(type, new Dice(amount).Roll());
+        public int TakeDamage(object source, DamageType type, string amount, Spells.DCEffect dCEffect, int dc, AbilityType dcAbility, out bool dcSuccess) {
+            return TakeDamage(source, type, new Dice(amount).Roll(), dCEffect, dc, dcAbility, out dcSuccess);
+        }
+
+        public int TakeDamage(object source, DamageType type, int amount) {
+            return TakeDamage(source, type, amount, Spells.DCEffect.NO_EFFECT, 0, AbilityType.CONSTITUTION, out _);
+        }
+
+        public int TakeDamage(object source, DamageType type, string diceString) {
+            return TakeDamage(source, type, new Dice(diceString).Roll(), Spells.DCEffect.NO_EFFECT, 0, AbilityType.CONSTITUTION, out _);
         }
 
         /// <summary>
         /// Apply the correct amount of damage of the given type to this Combattant, taking immunities, resistances and vulnerabilities into account.
         /// </summary>
-        public int TakeDamage(DamageType type, int amount, Spells.DCEffect dCEffect = Spells.DCEffect.NO_EFFECT, int dc = 0, AbilityType dcAbility = AbilityType.CONSTITUTION, object dcSource = null) {
+        public int TakeDamage(object source, DamageType type, int amount, Spells.DCEffect dCEffect, int dc, AbilityType dcAbility, out bool dcSuccess) {
+            dcSuccess = false;
             if (amount < 0) throw new Srd5ArgumentException("Amount must be a positive integer or zero");
             if (IsImmune(type)) return 0;
             if (IsResistant(type)) amount /= 2;
             if (IsVulnerable(type)) amount *= 2;
             if (dc > 0) {
-                bool success = DC(dcSource, dc, dcAbility);
-                if (success && dCEffect == Spells.DCEffect.HALVES_DAMAGE)
+                dcSuccess = DC(source, dc, dcAbility);
+                if (dcSuccess && dCEffect == Spells.DCEffect.HALVES_DAMAGE)
                     amount /= 2;
-                else if (success && dCEffect == Spells.DCEffect.NULLIFIES_DAMAGE)
+                else if (dcSuccess && dCEffect == Spells.DCEffect.NULLIFIES_DAMAGE)
                     return 0;
             }
             GlobalEvents.ReceivedDamage(this, amount, type);
+            // Remove from temporary hitpoints first
+            amount = temporaryHitpoints.Absorb(amount);
             // Instant death when leftover damage exceeds max hitpoints
             if (Math.Abs(HitPoints - amount) > HitPointsMax) {
                 HitPoints = 0;
                 Die();
             } else {
                 HitPoints = Math.Max(0, HitPoints - amount);
-                OnDamageTaken();
+                OnDamageTaken(source, new Damage(type, amount));
                 // Heroes start death saves when reduced to 0 hitpoints, monsters die instantly
                 if (HitPoints == 0) {
                     if (this is CharacterSheet && !HasEffect(Effect.FIGHTING_DEATH)) {
@@ -305,10 +346,10 @@ namespace srd5 {
             Ability ability = GetAbility(type);
             Die d20 = srd5.Die.D20;
             int additionalModifiers = 0;
-            if (HasEffect(Effect.RESISTANCE)) {
+            if (HasEffect(Effect.SPELL_RESISTANCE)) {
                 additionalModifiers += srd5.Die.D4.Value;
-                RemoveEffect(Effect.RESISTANCE);
-                GlobalEvents.ActivateEffect(this, Effect.RESISTANCE);
+                RemoveEffect(Effect.SPELL_RESISTANCE);
+                GlobalEvents.ActivateEffect(this, Effect.SPELL_RESISTANCE);
             }
             if (IsProficient(type)) {
                 additionalModifiers += ProficiencyBonus;
@@ -345,10 +386,12 @@ namespace srd5 {
             }
             Dice.onDiceRolled(d20);
             finalValue = d20.Value + ability.Modifier + additionalModifiers;
-            if (HasEffect(Effect.GUIDANCE)) {
+            if (HasEffect(Effect.SPELL_GUIDANCE)) {
                 finalValue += srd5.Die.D4.Value;
-                RemoveEffect(Effect.GUIDANCE);
+                RemoveEffect(Effect.SPELL_GUIDANCE);
             }
+            if (HasEffect(Effect.SPELL_BANE)) finalValue -= srd5.Die.D4.Value;
+            if (HasEffect(Effect.SPELL_BLESS)) finalValue += srd5.Die.D4.Value;
             bool success = finalValue >= dc;
             if (d20.Value == 20) success = true;
             if (d20.Value == 1) success = false;
@@ -438,19 +481,19 @@ namespace srd5 {
             }
         }
 
-        private TurnEvent[] damageTakenEvents = new TurnEvent[0];
+        private DamageTakenEvent[] damageTakenEvents = new DamageTakenEvent[0];
 
         /// <summary>
         /// Adds a piece of code to be evaluated when this combattatant takes damage
         /// </summary>
-        public void AddDamageTakenEvent(TurnEvent turnEvent) {
-            Utils.Push<TurnEvent>(ref damageTakenEvents, turnEvent);
+        public void AddDamageTakenEvent(DamageTakenEvent damageTakenEvent) {
+            Utils.Push<DamageTakenEvent>(ref damageTakenEvents, damageTakenEvent);
         }
 
-        public void OnDamageTaken() {
+        public void OnDamageTaken(object source, Damage damage) {
             for (int i = 0; i < damageTakenEvents.Length; i++) {
                 if (damageTakenEvents[i] == null) continue;
-                if (damageTakenEvents[i]()) {
+                if (damageTakenEvents[i](source, damage)) {
                     damageTakenEvents[i] = null;
                 }
             }
@@ -469,42 +512,49 @@ namespace srd5 {
             if (spell && ranged && target.HasFeat(Feat.REFLECTIVE_CARAPACE)) {
                 GlobalEvents.ActivateFeat(target, Feat.REFLECTIVE_CARAPACE);
                 if (srd5.Die.D6.Value == 6) { // reflect back on 6
-                    this.TakeDamage(attack.Damage.Type, attack.Damage.Dices.Roll());
+                    this.TakeDamage(this, attack.Damage.Type, attack.Damage.Dice.Roll());
                 }
                 return false;
             }
-            int attackRoll = srd5.Die.D20.Value;
+            Die attackRoll;
             // Determine advantage and disadvantage
             bool hasAdvantage = attackAdvantageEffect(attack, target, distance, ranged, spell);
             bool hasDisadvantage = attackDisadvantageEffect(attack, target, distance, ranged, spell);
             applyAttackModifyingEffects(ref hasAdvantage, ref hasDisadvantage, ref attack, ref target);
             if (hasAdvantage && !hasDisadvantage)
-                attackRoll = srd5.Die.D20Advantage.Value;
+                attackRoll = srd5.Die.D20Advantage;
             else if (hasDisadvantage && !hasAdvantage)
-                attackRoll = srd5.Die.D20Disadvantage.Value;
-            bool criticalHit = attackRoll == 20;
-            bool criticalMiss = attackRoll == 1;
+                attackRoll = srd5.Die.D20Disadvantage;
+            else
+                attackRoll = srd5.Die.D20;
+            bool criticalHit = attackRoll.Value == 20;
+            bool criticalMiss = attackRoll.Value == 1;
             if (criticalMiss) {
-                GlobalEvents.RolledAttack(this, attack, target, attackRoll, false);
+                GlobalEvents.RolledAttack(this, attack, target, attackRoll.Value, false);
                 return false;
             }
-            int modifiedAttack = attackRoll + attack.AttackBonus;
+            int modifiedAttack = attackRoll.Value + attack.AttackBonus;
+            // Apply special effects
+            if (HasEffect(Effect.SPELL_BANE)) modifiedAttack -= srd5.Die.D4.Value;
+            if (HasEffect(Effect.SPELL_BLESS)) modifiedAttack += srd5.Die.D4.Value;
             if (!criticalHit && modifiedAttack < target.ArmorClass) {
-                GlobalEvents.RolledAttack(this, attack, target, attackRoll, false);
+                GlobalEvents.RolledAttack(this, attack, target, attackRoll.Value, false);
                 return false;
             }
             // Check if auto critical hit conditions apply
             if (HasEffect(Effect.AUTOMATIC_CRIT_ON_HIT)) criticalHit = true;
             if (target.HasEffect(Effect.AUTOMATIC_CRIT_ON_BEING_HIT_WITHIN_5_FT) && distance <= 5) criticalHit = true;
-            GlobalEvents.RolledAttack(this, attack, target, attackRoll, true, criticalHit);
+            GlobalEvents.RolledAttack(this, attack, target, attackRoll.Value, true, criticalHit);
+            int bonusDamage = 0;
+            if (HasEffect(Effect.SPELL_DIVINE_FAVOR)) bonusDamage += srd5.Die.D4.Value;
             if (criticalHit) {
                 int times = 2;
                 if (attack.HasProperty(srd5.Attack.Property.TRIPLE_DICE_ON_CRIT)) times = 3;
-                target.TakeDamage(attack.Damage.Type, attack.Damage.Dices.RollCritical(times));
-                if (attack.AdditionalDamage != null) target.TakeDamage(attack.AdditionalDamage.Type, attack.AdditionalDamage.Dices.RollCritical(times));
+                target.TakeDamage(this, attack.Damage.Type, attack.Damage.Dice.RollCritical(times) + bonusDamage);
+                if (attack.AdditionalDamage != null) target.TakeDamage(this, attack.AdditionalDamage.Type, attack.AdditionalDamage.Dice.RollCritical(times));
             } else {
-                target.TakeDamage(attack.Damage.Type, attack.Damage.Dices.Roll());
-                if (attack.AdditionalDamage != null) target.TakeDamage(attack.AdditionalDamage.Type, attack.AdditionalDamage.Dices.Roll());
+                target.TakeDamage(this, attack.Damage.Type, attack.Damage.Dice.Roll() + bonusDamage);
+                if (attack.AdditionalDamage != null) target.TakeDamage(this, attack.AdditionalDamage.Type, attack.AdditionalDamage.Dice.Roll());
             }
             // Hit effect
             attack.ApplyEffectOnHit(this, target);
@@ -532,7 +582,14 @@ namespace srd5 {
         /// </summary>
         private bool attackAdvantageEffect(Attack attack, Combattant target, int distance, bool ranged, bool spell) {
             bool advantage = HasEffect(Effect.ADVANTAGE_ON_ATTACK);
-            advantage = advantage || target.HasEffect(Effect.ADVANTAGE_ON_BEING_ATTACKED);
+            advantage = advantage || target.HasEffect(Effect.ADVANTAGE_ON_BEING_ATTACKED)
+                                  || (target.HasCondition(ConditionType.PRONE) && !ranged)
+                                  || target.HasCondition(ConditionType.RESTRAINED)
+                                  || target.HasCondition(ConditionType.STUNNED)
+                                  || target.HasCondition(ConditionType.PARALYZED)
+                                  || target.HasCondition(ConditionType.UNCONSCIOUS)
+                                  || target.HasCondition(ConditionType.BLINDED)
+                                  || target.HasCondition(ConditionType.PETRIFIED);
             return advantage;
         }
 
@@ -542,7 +599,26 @@ namespace srd5 {
         /// </summary>
         private bool attackDisadvantageEffect(Attack attack, Combattant target, int distance, bool ranged, bool spell) {
             bool disadvantage = HasEffect(Effect.DISADVANTAGE_ON_ATTACK);
-            disadvantage = disadvantage || target.HasEffect(Effect.DISADVANTAGE_ON_BEING_ATTACKED);
+            disadvantage = disadvantage || target.HasEffect(Effect.DISADVANTAGE_ON_BEING_ATTACKED)
+                                        || target.HasCondition(ConditionType.INVISIBLE)
+                                        || (target.HasCondition(ConditionType.PRONE) && ranged);
+            disadvantage = disadvantage || HasCondition(ConditionType.RESTRAINED)
+                                        || HasCondition(ConditionType.BLINDED)
+                                        || HasCondition(ConditionType.EXHAUSTED_3)
+                                        || HasCondition(ConditionType.POISONED)
+                                        || HasCondition(ConditionType.PRONE);
+            if (!disadvantage && target.HasEffect(Effect.SPELL_PROTECTION_FROM_EVIL_AND_GOOD) && this is Monster monster) {
+                switch(monster.Type) {
+                    case Monsters.Type.ABERRATION:
+                    case Monsters.Type.CELESTIAL:
+                    case Monsters.Type.ELEMENTAL:
+                    case Monsters.Type.FEY:
+                    case Monsters.Type.FIEND:
+                    case Monsters.Type.UNDEAD:
+                        disadvantage = true;
+                        break;
+                }
+            }            
             disadvantage = disadvantage || (ranged && (distance <= 5 || distance > attack.RangeNormal));
             return disadvantage;
         }
@@ -560,6 +636,8 @@ namespace srd5 {
     /// The event is considered finished when the delegate returns true.
     /// </summary>
     public delegate bool TurnEvent();
+
+    public delegate bool DamageTakenEvent(object source, Damage damage);
 
     /// <summary>
     /// Describes an effect that modifies this combattant's attack roll. 

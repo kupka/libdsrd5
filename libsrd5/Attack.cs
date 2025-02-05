@@ -64,12 +64,12 @@ namespace srd5 {
             if (dcAvoidsDamage && success) return 0;
             int amount = new Dice(dice).Roll();
             if (success) amount /= 2;
-            amount = target.TakeDamage(DamageType.POISON, amount);
+            amount = target.TakeDamage(source, DamageType.POISON, amount);
             return amount;
         }
     }
 
-    public class Attack {
+    public class Attack : GuidClass {
         public enum Property {
             TRIPLE_DICE_ON_CRIT
         }

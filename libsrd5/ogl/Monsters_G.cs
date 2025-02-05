@@ -88,7 +88,7 @@ namespace srd5 {
         public static readonly AttackEffect GiantCentipedeBiteEffect = delegate (Combattant attacker, Combattant target) {
             if (target.IsImmune(DamageType.POISON)) return;
             if (target.DC(GiantCentipedeBite, 11, AbilityType.CONSTITUTION)) return;
-            target.TakeDamage(DamageType.POISON, "3d6");
+            target.TakeDamage(attacker, DamageType.POISON, "3d6");
             // TODO: "If the poison damage reduces the target to 0 hit points, the target is stable but poisoned for 1 hour, even after regaining hit points, and is paralyzed while poisoned in this way."
         };
         public static Attack GiantCentipedeBite {
@@ -147,7 +147,7 @@ namespace srd5 {
         public static readonly AttackEffect GiantElkHoovesEffect = delegate (Combattant attacker, Combattant target) {
             if (!target.HasCondition(ConditionType.PRONE)) return;
             int amount = new Dice("4d8+4").Roll(); // FIXME: Cannot crit because attack roll is not available here
-            target.TakeDamage(DamageType.BLUDGEONING, amount);
+            target.TakeDamage(attacker, DamageType.BLUDGEONING, amount);
         };
         public static Attack GiantElkHooves {
             get {

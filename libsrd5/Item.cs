@@ -105,16 +105,16 @@ namespace srd5 {
 
     public class Damage {
         public DamageType Type { get; internal set; }
-        public Dice Dices { get; internal set; }
+        public Dice Dice { get; internal set; }
 
         public Damage(DamageType type, string diceString) {
             Type = type;
-            Dices = new Dice(diceString);
+            Dice = new Dice(diceString);
         }
 
         public Damage(DamageType type, int value) {
             Type = type;
-            Dices = new Dice(value, 1, 0);
+            Dice = new Dice(value, 1, 0);
         }
     }
 
